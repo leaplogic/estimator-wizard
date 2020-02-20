@@ -1,0 +1,43 @@
+{
+    "name": "leaplogic/estimator-wizard",
+    "description": "Manage front end estimations from wizard steps.",
+    "type": "craft-plugin",
+    "version": "1.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "estimator wizard"
+    ],
+    "support": {
+        "docs": "https://github.com/leaplogic/estimator-wizard/estimator-wizard/blob/master/README.md",
+        "issues": "https://github.com/leaplogic/estimator-wizard/estimator-wizard/issues"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Leap Logic",
+            "homepage": "https://leaplogic.net"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^3.0.0-RC1"
+    },
+    "autoload": {
+        "psr-4": {
+          "leaplogic\\estimatorwizard\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Estimator Wizard",
+        "handle": "estimator-wizard",
+        "hasCpSettings": true,
+        "hasCpSection": true,
+        "changelogUrl": "https://raw.githubusercontent.com/leaplogic/estimator-wizard/estimator-wizard/master/CHANGELOG.md",
+        "components": {
+            "estimatorWizardService": "leaplogic\\estimatorwizard\\services\\EstimatorWizardService"
+        },
+        "class": "leaplogic\\estimatorwizard\\EstimatorWizard"
+    }
+}
