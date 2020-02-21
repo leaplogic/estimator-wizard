@@ -15,12 +15,20 @@
 
 {% import "_includes/forms" as forms %}
 
-{% do view.registerAssetBundle("leaplogic\\estimatorwizard\\assetbundles\\estimatorwizard\\EstimatorWizardAsset") %}
+{# {% do view.registerAssetBundle("leaplogic\\estimatorwizard\\assetbundles\\estimatorwizard\\EstimatorWizardAsset") %} #}
 
 {{ forms.textField({
-    label: 'Some Field',
-    instructions: 'Enter some setting here.',
-    id: 'someAttribute',
-    name: 'someAttribute',
-    value: settings['someAttribute']})
+    label: 'Email Leads To',
+    instructions: 'Comma separated list of email addresses.',
+    id: 'emailTo',
+    name: 'emailTo',
+    value: settings['emailTo']})
+}}
+
+{{ forms.textField({
+    label: 'Zip Codes',
+    instructions: 'Comma separated list of zip codes for lead contact validation.',
+    id: 'zipCodes',
+    name: 'zipCodes',
+    value: settings['zipCodes']})
 }}
