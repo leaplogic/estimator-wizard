@@ -78,14 +78,17 @@ class LeadEstimate extends Element
      *
      * @var string
      */
-    public $path = '';
-    public $results = '';
-    public $contactName = '';
-    public $contactEmail = '';
-    public $contactPhone = '';
-    public $contactCustomer ='';
-
+    public $id;
+    public $pathLabel;
+    public $pathBasePrice;
+    public $results;
+    public $contactName;
+    public $contactEmail;
+    public $contactPhone;
+    public $contactZipCode;
+    public $contactCustomer;
     public $statusId;
+    public $statusHandle;
 
     // Static Methods
     // =========================================================================
@@ -100,6 +103,15 @@ class LeadEstimate extends Element
         return Craft::t('estimator-wizard', 'Lead Estimates');
     }
 
+
+    /**
+     * @inheritdoc
+     */
+    public static function refHandle()
+    {
+        return 'leads';
+    }
+
     /**
      * Returns whether elements of this type will be storing any data in the `content`
      * table (tiles or custom fields).
@@ -108,7 +120,7 @@ class LeadEstimate extends Element
      */
     public static function hasContent(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -118,7 +130,7 @@ class LeadEstimate extends Element
      */
     public static function hasTitles(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -140,6 +152,17 @@ class LeadEstimate extends Element
     public static function hasStatuses(): bool
     {
         return true;
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    public function getCpEditUrl()
+    {
+        return UrlHelper::cpUrl(
+            'estimator-wizard/leads/edit/'.$this->id
+        );
     }
 
 
@@ -230,20 +253,6 @@ class LeadEstimate extends Element
         return new ElementQuery(get_called_class());
     }
 
-    /**
-     * Defines the sources that elements of this type may belong to.
-     *
-     * @param string|null $context The context ('index' or 'modal').
-     *
-     * @return array The sources.
-     * @see sources()
-     */
-    protected static function defineSources(string $context = null): array
-    {
-        $sources = [];
-
-        return $sources;
-    }
 
     // Public Methods
     // =========================================================================
@@ -260,10 +269,8 @@ class LeadEstimate extends Element
      */
     public function rules()
     {
-        return [
-            ['someAttribute', 'string'],
-            ['someAttribute', 'default', 'value' => 'Some Default'],
-        ];
+        $rules = parent::rules();
+        return $rules;
     }
 
     /**
@@ -276,36 +283,7 @@ class LeadEstimate extends Element
         return true;
     }
 
-    /**
-     * Returns the field layout used by this element.
-     *
-     * @return FieldLayout|null
-     */
-    /*
-    public function getFieldLayout()
-    {
-        $tagGroup = $this->getGroup();
 
-        if ($tagGroup) {
-            return $tagGroup->getFieldLayout();
-        }
-
-        return null;
-    }
-
-    
-    public function getGroup()
-    {
-        if ($this->groupId === null) {
-            throw new InvalidConfigException('Tag is missing its group ID');
-        }
-
-        if (($group = Craft::$app->getTags()->getTagGroupById($this->groupId)) === null) {
-            throw new InvalidConfigException('Invalid tag group ID: '.$this->groupId);
-        }
-
-        return $group;
-    }*/
 
     // Indexes, etc.
     // -------------------------------------------------------------------------
@@ -336,6 +314,21 @@ class LeadEstimate extends Element
         return $html;
     }
 
+
+    /**
+     * @inheritdoc
+     */
+    protected static function defineTableAttributes(): array
+    {
+        $attributes['pathLabel'] = ['label' => Craft::t('estimator-wizard', 'Path Label')];
+        $attributes['contactName'] = ['label' => Craft::t('estimator-wizard', 'Contact Name')];
+        //$attributes['contactEmail'] = ['label' => Craft::t('estimator-wizard', 'Contact Email')];
+        $attributes['dateCreated'] = ['label' => Craft::t('estimator-wizard', 'Date Created')];
+        $attributes['dateUpdated'] = ['label' => Craft::t('estimator-wizard', 'Date Updated')];
+
+        return $attributes;
+    }
+
     // Events
     // -------------------------------------------------------------------------
 
@@ -360,6 +353,49 @@ class LeadEstimate extends Element
      */
     public function afterSave(bool $isNew)
     {
+        // Get the lead estimate record
+        if (!$isNew) {
+            $record = LeadEstimateRecord::findOne($this->id);
+
+            if (!$record) {
+                throw new Exception('Invalid Lead ID: '.$this->id);
+            }
+        } else {
+            $record = new LeadEstimateRecord();
+            $record->id = $this->id;
+        }
+
+        $record->statusId = $this->statusId;
+        $record->pathLabel = $this->pathLabel;
+        $record->pathBasePrice = $this->pathBasePrice;
+        $record->results = $this->results;
+        $record->contactName = $this->contactName;
+        $record->contactEmail = $this->contactEmail;
+        $record->contactPhone = $this->contactPhone;
+        $record->contactZipCode = $this->contactZipCode;
+        $record->contactCustomer = $this->contactCustomer;
+
+        $record->save(false);
+
+        parent::afterSave($isNew);
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    protected static function defineActions(string $source = null): array
+    {
+        $actions = [];
+
+        // Delete
+        $actions[] = Craft::$app->getElements()->createAction([
+            'type' => Delete::class,
+            'confirmationMessage' => Craft::t('estimator-wizard', 'Are you sure you want to delete the selected leads?'),
+            'successMessage' => Craft::t('estimator-wizard', 'Leads deleted.'),
+        ]);
+
+        return $actions;
     }
 
     /**
@@ -381,26 +417,4 @@ class LeadEstimate extends Element
     {
     }
 
-    /**
-     * Performs actions before an element is moved within a structure.
-     *
-     * @param int $structureId The structure ID
-     *
-     * @return bool Whether the element should be moved within the structure
-     */
-    public function beforeMoveInStructure(int $structureId): bool
-    {
-        return true;
-    }
-
-    /**
-     * Performs actions after an element is moved within a structure.
-     *
-     * @param int $structureId The structure ID
-     *
-     * @return void
-     */
-    public function afterMoveInStructure(int $structureId)
-    {
-    }
 }
