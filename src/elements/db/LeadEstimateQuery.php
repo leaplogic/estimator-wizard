@@ -36,6 +36,126 @@ class LeadEstimateQuery extends ElementQuery
 
         parent::__construct($elementType, $config);
     }
+    
+
+    /**
+     * Sets the [[pathLabel]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function pathLabel($value): LeadEstimateQuery
+    {
+        $this->pathLabel = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the [[pathBasePrice]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function pathBasePrice($value): LeadEstimateQuery
+    {
+        $this->pathBasePrice = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the [[results]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function results($value): LeadEstimateQuery
+    {
+        $this->results = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the [[contactName]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function contactName($value): LeadEstimateQuery
+    {
+        $this->contactName = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the [[contactEmail]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function contactEmail($value): LeadEstimateQuery
+    {
+        $this->contactEmail = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the [[contactPhone]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function contactPhone($value): LeadEstimateQuery
+    {
+        $this->contactPhone = $value;
+
+        return $this;
+    }
+
+    /**
+     * Sets the [[contactZipCode]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function contactZipCode($value): LeadEstimateQuery
+    {
+        $this->contactZipCode = $value;
+
+        return $this;
+    }
+
+
+    /**
+     * Sets the [[contactCustomer]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function contactCustomer($value): LeadEstimateQuery
+    {
+        $this->contactCustomer = $value;
+
+        return $this;
+    }
+
 
     /**
      * Sets the [[statusId]] property.
@@ -80,6 +200,14 @@ class LeadEstimateQuery extends ElementQuery
 
 
         $this->query->select([
+            'estimatorwizard_leadestimates.pathLabel',
+            'estimatorwizard_leadestimates.pathBasePrice',
+            'estimatorwizard_leadestimates.results',
+            'estimatorwizard_leadestimates.contactName',
+            'estimatorwizard_leadestimates.contactEmail',
+            'estimatorwizard_leadestimates.contactPhone',
+            'estimatorwizard_leadestimates.contactZipCode',
+            'estimatorwizard_leadestimates.contactCustomer',
             'estimatorwizard_leadestimates.statusId',
             'estimatorwizard_leadestimates.dateCreated',
             'estimatorwizard_leadestimates.dateUpdated',
