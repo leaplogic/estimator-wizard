@@ -23,7 +23,6 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use craft\web\Controller;
-use leaplogic\estimatorwizard\records\LeadEstimate;
 
 /**
  * Default Controller
@@ -104,12 +103,6 @@ class LeadEstimateController extends Controller
             ? $lead->statusId
             : EstimatorWizard::$app->leads->getDefaultLeadStatusId();
 
-        // Render the Entry Title
-        try {
-            $lead->title = Craft::$app->getView()->renderObjectTemplate($this->form->titleFormat, $lead);
-        } catch (\Exception $e) {
-            Craft::error('Title format error: '.$e->getMessage(), __METHOD__);
-        }
 
         $success = $lead->validate();
 
@@ -131,7 +124,7 @@ class LeadEstimateController extends Controller
      * @throws Throwable
      * @throws BadRequestHttpException
      */
-    private function saveLeadInCraft(LeadEstimate $lead)
+    private function saveLeadInCraft(LeadEstimateElement $lead)
     {
         $success = true;
 
@@ -231,6 +224,18 @@ class LeadEstimateController extends Controller
     private function populateLeadModel(LeadEstimateElement $lead)
     {
         $request = Craft::$app->getRequest();
+
+        // Set the lead attributes, defaulting to the existing values for whatever is missing from the post data
+        $path = $request->getBodyParam('path');
+        $contact = $request->getBodyParam('contact');
+        $lead->$pathLabel = $path['label'];
+        $lead->$pathBasePrice = $path['price'];
+        $lead->$contactName = $contact['name'];
+        $lead->$contactEmail = $contact['email'];
+        $lead->$contactPhone = $contact['phone'];
+        $lead->$contactZipCode = $contact['zipCode'];
+        $lead->$contactCustomer = $contact['previousCustomer'];
+
     }
 
     /**
@@ -259,7 +264,7 @@ class LeadEstimateController extends Controller
 
         if (!$lead) {
             $message = Craft::t('estimator-wizard', 'No lead estimate exists with the given ID: {id}', [
-                'entryId' => $leadId
+                'leadId' => $leadId
             ]);
             throw new Exception($message);
         }
