@@ -11,9 +11,19 @@
 namespace leaplogic\estimatorwizard\controllers;
 
 use leaplogic\estimatorwizard\EstimatorWizard;
+use leaplogic\estimatorwizard\elements\LeadEstimate as LeadEstimateElement;
+use yii\web\Response;
 
 use Craft;
+use craft\errors\MissingComponentException;
+use Throwable;
+use yii\base\Exception;
+use yii\base\InvalidConfigException;
+use yii\web\BadRequestHttpException;
+use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 use craft\web\Controller;
+use leaplogic\estimatorwizard\records\LeadEstimate;
 
 /**
  * Default Controller
@@ -46,7 +56,7 @@ class LeadEstimateController extends Controller
      *         The actions must be in 'kebab-case'
      * @access protected
      */
-    protected $allowAnonymous = ['index', 'view-lead-email'];
+    protected $allowAnonymous = ['index', 'save-lead-estimate', 'view-lead-email'];
 
     // Public Methods
     // =========================================================================
@@ -76,7 +86,185 @@ class LeadEstimateController extends Controller
         $this->requirePostRequest();
 
         $request = Craft::$app->getRequest();
+
+        $lead = $this->getLeadModel();
+
+        Craft::$app->getContent()->populateElementContent($lead);
+
+        $statusId = $request->getBodyParam('statusId');
+
+        if ($statusId !== null) {
+            $lead->statusId = $statusId;
+        }
+
+        // Populate the entry with post data
+        $this->populateLeadModel($lead);
+
+        $lead->statusId = $lead->statusId != null
+            ? $lead->statusId
+            : EstimatorWizard::$app->leads->getDefaultLeadStatusId();
+
+        // Render the Entry Title
+        try {
+            $lead->title = Craft::$app->getView()->renderObjectTemplate($this->form->titleFormat, $lead);
+        } catch (\Exception $e) {
+            Craft::error('Title format error: '.$e->getMessage(), __METHOD__);
+        }
+
+        $success = $lead->validate();
+
+        if (!$success) {
+            Craft::error($lead->getErrors(), __METHOD__);
+            return $this->redirectWithErrors($lead);
+        }
+
+        return $this->saveLeadInCraft($lead);
         
+    }
+
+    /**
+     * @param LeadEstimateElement $lead
+     *
+     * @return null|Response
+     * @throws Exception
+     * @throws \Exception
+     * @throws Throwable
+     * @throws BadRequestHttpException
+     */
+    private function saveLeadInCraft(LeadEstimate $lead)
+    {
+        $success = true;
+
+        // Save Data and Trigger the onSaveLeadEvent
+        $success = EstimatorWizard::$app->leads->saveEntry($lead);
+
+        if (!$success) {
+            return $this->redirectWithErrors($lead);
+        }
+
+        $this->createLastLeadId($lead);
+
+        if (Craft::$app->getRequest()->getAcceptsJson()) {
+            return $this->asJson([
+                'success' => true
+            ]);
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('estimator-wizard', 'Lead Estimate saved.'));
+
+        return $this->redirectToPostedUrl($lead);
+    }
+
+
+      /**
+     * Route Controller for Edit Lead Template
+     *
+     * @param int|null          $leadId
+     * @param LeadEstimateElement|null $lead
+     *
+     * @return Response
+     * @throws ForbiddenHttpException
+     * @throws NotFoundHttpException
+     * @throws MissingComponentException
+     * @throws InvalidConfigException
+     */
+    public function actionEditLead(int $leadId = null, LeadEstimateElement $lead = null): Response
+    {
+        //$this->requirePermission('estimatorWizard-editLeads');
+
+        if ($lead === null) {
+            $lead = EstimatorWizard::$app->leads->getLeadById($leadId);
+        }
+
+        if (!$lead) {
+            throw new NotFoundHttpException('Lead not found');
+        }
+
+        Craft::$app->getContent()->populateElementContent($lead);
+
+        $leadStatus = EstimatorWizard::$app->leads->getLeadStatusById($lead->statusId);
+        $statuses = EstimatorWizard::$app->leads->getAllLeadStatuses();
+        $leadStatuses = [];
+
+        foreach ($statuses as $key => $status) {
+            $leadStatuses[$status->id] = $status->name;
+        }
+
+        $variables['leadId'] = $leadId;
+        $variables['leadStatus'] = $leadStatus;
+        $variables['statuses'] = $leadStatuses;
+
+        // This is our element, so we know where to get the field values
+        $variables['lead'] = $lead;
+
+        return $this->renderTemplate('estimator-wizard/leads/_edit', $variables);
+    }
+
+    /**
+     * @return Response
+     * @throws Throwable
+     * @throws BadRequestHttpException
+     */
+    public function actionDeleteLead(): Response
+    {
+        $this->requirePostRequest();
+        //$this->requirePermission('estimatorWizard-editLeads');
+
+        $request = Craft::$app->getRequest();
+
+        // Get the Lead
+        $leadId = $request->getRequiredBodyParam('leadId');
+
+        Craft::$app->elements->deleteElementById($leadId);
+
+        return $this->redirectToPostedUrl();
+    }
+
+
+    /**
+     * Populate a LeadEstimateElement with post data
+     *
+     * @access private
+     *
+     * @param LeadEstimateElement $lead
+     */
+    private function populateLeadModel(LeadEstimateElement $lead)
+    {
+        $request = Craft::$app->getRequest();
+    }
+
+    /**
+     * Fetch or create a LeadEstimateElement class
+     *
+     * @return LeadEstimateElement
+     * @throws Exception
+     */
+
+    private function getLeadModel(): LeadEstimateElement
+    {
+        $leadId = null;
+        $request = Craft::$app->getRequest();
+
+        /** @var EstimatorWizard $plugin */
+        $plugin = Craft::$app->getPlugins()->getPlugin('estimator-wizard');
+        $settings = $plugin->getSettings();
+
+        $leadId = $request->getBodyParam('leadId');
+
+        if (!$leadId) {
+            return new LeadEstimateElement();
+        }
+
+        $lead = EstimatorWizard::$app->entries->getLeadById($leadId);
+
+        if (!$lead) {
+            $message = Craft::t('estimator-wizard', 'No lead estimate exists with the given ID: {id}', [
+                'entryId' => $leadId
+            ]);
+            throw new Exception($message);
+        }
+
+        return $lead;
     }
 
 
