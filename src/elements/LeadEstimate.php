@@ -10,12 +10,19 @@
 
 namespace leaplogic\estimatorwizard\elements;
 
-use leaplogic\estimatorwizard\EstimatorWizard;
-
 use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQuery;
 use craft\elements\db\ElementQueryInterface;
+
+use craft\helpers\UrlHelper;
+use craft\elements\actions\Delete;
+use leaplogic\estimatorwizard\elements\db\LeadEstimateQuery;
+use leaplogic\estimatorwizard\records\LeadEstimate as LeadEstimateRecord;
+use leaplogic\estimatorwizard\EstimatorWizard;
+use yii\base\Exception;
+use yii\base\InvalidConfigException;
+use yii\db\ActiveRecord;
 
 /**
  *  Element
@@ -138,13 +145,26 @@ class LeadEstimate extends Element
 
     public static function statuses(): array
     {
-        return [
-            'qualified' => ['label' => \Craft::t('estimator-wizard', 'Qualified'), 'color' => 'A8E26E'],
-            'qalified-out-of-area' => ['label' => \Craft::t('estimator-wizard', 'Qualified (Out of Area)'), 'color' => 'cb7624'],
-            'unqualified-phone' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Phone)'), 'color' => 'a5272a'],
-            'unqualified-email' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Email)'), 'color' => 'a5272a'],
-            'unqualified-spam' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Spam)'), 'color' => 'a5272a'],
-        ];
+        $statuses = EstimatorWizard::$app->leads->getAllLeadStatuses();
+        $statusArray = [];
+
+        foreach ($statuses as $status) {
+            $key = $status['handle'];
+            $statusArray[$key] = [
+                'label' => $status['name'],
+                'color' => $status['color'],
+            ];
+        }
+
+        return $statusArray;
+       /* return [
+            // 'unverified' => ['label' => \Craft::t('estimator-wizard', 'Unverified'), 'color' => '333333'],
+            // 'qualified' => ['label' => \Craft::t('estimator-wizard', 'Qualified'), 'color' => 'A8E26E'],
+            // 'qalified-out-of-area' => ['label' => \Craft::t('estimator-wizard', 'Qualified (Out of Area)'), 'color' => 'cb7624'],
+            // 'unqualified-phone' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Phone)'), 'color' => 'a5272a'],
+            // 'unqualified-email' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Email)'), 'color' => 'a5272a'],
+            // 'unqualified-spam' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Spam)'), 'color' => 'a5272a'],
+        ];*/
     }
 
     /**
@@ -155,7 +175,7 @@ class LeadEstimate extends Element
     {
         $statusId = $this->statusId;
 
-        return EstimatorWizard::$app->entries->getEntryStatusById($statusId)->handle;
+        return EstimatorWizard::$app->leads->getLeadStatusById($statusId)->handle;
     }
 
 
@@ -261,6 +281,7 @@ class LeadEstimate extends Element
      *
      * @return FieldLayout|null
      */
+    /*
     public function getFieldLayout()
     {
         $tagGroup = $this->getGroup();
@@ -272,6 +293,7 @@ class LeadEstimate extends Element
         return null;
     }
 
+    
     public function getGroup()
     {
         if ($this->groupId === null) {
@@ -283,7 +305,7 @@ class LeadEstimate extends Element
         }
 
         return $group;
-    }
+    }*/
 
     // Indexes, etc.
     // -------------------------------------------------------------------------

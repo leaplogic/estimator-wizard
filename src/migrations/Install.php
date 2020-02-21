@@ -55,7 +55,7 @@ class Install extends Migration
      */
     public function safeUp()
     {
-        $this->driver = Craft::$app->getConfig()->getDb()->driver;
+        $this->driver = Craft::$app->getConfig()->getDb();
         if ($this->createTables()) {
             $this->createIndexes();
             $this->addForeignKeys();
@@ -79,7 +79,7 @@ class Install extends Migration
      */
     public function safeDown()
     {
-        $this->driver = Craft::$app->getConfig()->getDb()->driver;
+        $this->driver = Craft::$app->getConfig()->getDb();
         $this->removeTables();
 
         return true;
@@ -102,7 +102,7 @@ class Install extends Migration
         if ($tableSchema === null) {
             $tablesCreated = true;
             $this->createTable(
-                '{{%estimatorwizard_estimatorwizardrecord}}',
+                '{{%estimatorwizard_leadestimates}}',
                 [
                     'id' => $this->primaryKey(),
                     'dateCreated' => $this->dateTime()->notNull(),
@@ -110,9 +110,45 @@ class Install extends Migration
                     'uid' => $this->uid(),
                 // Custom columns in the table
                     'siteId' => $this->integer()->notNull(),
-                    'some_field' => $this->string(255)->notNull()->defaultValue(''),
+                    'statusId' => $this->integer()->notNull(),
+                    'pathLabel' => $this->string(255)->defaultValue(''),
+                    'pathBasePrice' => $this->json()->defaultValue([]),
+                    'results' => $this->json()->defaultValue([]),
+                    'contactName' => $this->string(255)->defaultValue(''),
+                    'contactEmail' => $this->string(255)->defaultValue(''),
+                    'contactPhone' => $this->string(255)->defaultValue(''),
+                    'contactZip' => $this->integer(),
+                    'contactCustomer' => $this->boolean()
                 ]
             );
+
+            $this->createTable('{{%estimatorwizard_leadstatuses}}', [
+                'id' => $this->primaryKey(),
+                'name' => $this->string()->notNull(),
+                'handle' => $this->string()->notNull(),
+                'color' => $this->enum('color',
+                    [
+                        'green', 'orange', 'red', 'blue',
+                        'yellow', 'pink', 'purple', 'turquoise',
+                        'light', 'grey', 'black'
+                    ])
+                    ->notNull()->defaultValue('blue'),
+                'sortOrder' => $this->smallInteger()->unsigned(),
+                'isDefault' => $this->boolean(),
+                'dateCreated' => $this->dateTime()->notNull(),
+                'dateUpdated' => $this->dateTime()->notNull(),
+                'uid' => $this->uid(),
+            ]);
+
+            $this->createTable('{{%estimatorwizard_leadstatuslog}}', [
+                'id' => $this->primaryKey(),
+                'leadId' => $this->integer(),
+                'status' => $this->string()->notNull(),
+                'changedData' => $this->text(),
+                'dateCreated' => $this->dateTime()->notNull(),
+                'dateUpdated' => $this->dateTime()->notNull(),
+                'uid' => $this->uid(),
+            ]);
         }
 
         return $tablesCreated;
@@ -125,22 +161,23 @@ class Install extends Migration
      */
     protected function createIndexes()
     {
-    // estimatorwizard_estimatorwizardrecord table
+        // estimatorwizard_leadstatuslog table
         $this->createIndex(
             $this->db->getIndexName(
-                '{{%estimatorwizard_estimatorwizardrecord}}',
-                'some_field',
+                '{{%estimatorwizard_leadstatuslog}}',
+                'leadId',
                 true
             ),
-            '{{%estimatorwizard_estimatorwizardrecord}}',
-            'some_field',
+            '{{%estimatorwizard_leadstatuslog}}',
+            'leadId',
             true
         );
+
         // Additional commands depending on the db driver
         switch ($this->driver) {
-            case DbConfig::DRIVER_MYSQL:
+            case 'mysql':
                 break;
-            case DbConfig::DRIVER_PGSQL:
+            case 'pgsql':
                 break;
         }
     }
@@ -152,15 +189,24 @@ class Install extends Migration
      */
     protected function addForeignKeys()
     {
-    // estimatorwizard_estimatorwizardrecord table
+        // estimatorwizard_leadestimate table
         $this->addForeignKey(
-            $this->db->getForeignKeyName('{{%estimatorwizard_estimatorwizardrecord}}', 'siteId'),
-            '{{%estimatorwizard_estimatorwizardrecord}}',
+            $this->db->getForeignKeyName('{{%estimatorwizard_leadestimates}}', 'siteId'),
+            '{{%estimatorwizard_leadestimates}}',
             'siteId',
             '{{%sites}}',
             'id',
             'CASCADE',
             'CASCADE'
+        );
+
+        // estimatorwizard_leadstatuslog table
+        $this->addForeignKey(
+            $this->db->getForeignKeyName(
+                '{{%estimatorwizard_leadstatuslog}}', 'leadId'
+            ),
+            '{{%estimatorwizard_leadstatuslog}}', 'leadId',
+            '{{%estimatorwizard_leadestimates}}', 'id', 'CASCADE'
         );
     }
 
@@ -171,6 +217,35 @@ class Install extends Migration
      */
     protected function insertDefaultData()
     {
+
+        // populate default Lead Statuses
+        $defaultLeadStatuses = [
+            0 => [
+                'name' => 'Unread',
+                'handle' => 'unread',
+                'color' => 'blue',
+                'sortOrder' => 1,
+                'isDefault' => 1
+            ],
+            1 => [
+                'name' => 'Read',
+                'handle' => 'read',
+                'color' => 'grey',
+                'sortOrder' => 2,
+                'isDefault' => 0
+            ]
+        ];
+
+        foreach ($defaultLeadStatuses as $leadStatus) {
+            $this->db->createCommand()->insert('{{%estimatorwizard_leadstatuses}}', [
+                'name' => $leadStatus['name'],
+                'handle' => $leadStatus['handle'],
+                'color' => $leadStatus['color'],
+                'sortOrder' => $leadStatus['sortOrder'],
+                'isDefault' => $leadStatus['isDefault']
+            ])->execute();
+        }
+
     }
 
     /**
@@ -180,7 +255,8 @@ class Install extends Migration
      */
     protected function removeTables()
     {
-    // estimatorwizard_estimatorwizardrecord table
-        $this->dropTableIfExists('{{%estimatorwizard_estimatorwizardrecord}}');
+        $this->dropTableIfExists('{{%estimatorwizard_leadestimates}}');
+        $this->dropTableIfExists('{{%estimatorwizard_leadstatuses}}');
+        $this->dropTableIfExists('{{%estimatorwizard_leadstatuslog}}');
     }
 }

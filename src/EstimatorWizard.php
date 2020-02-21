@@ -56,6 +56,13 @@ class EstimatorWizard extends Plugin
      */
     public static $plugin;
 
+    /**
+     * Enable use of EstimatorWizard::$app-> in place of Craft::$app->
+     *
+     * @var App
+     */
+    public static $app;
+
     // Public Properties
     // =========================================================================
 
@@ -84,6 +91,15 @@ class EstimatorWizard extends Plugin
     {
         parent::init();
         self::$plugin = $this;
+
+        $this->setComponents([
+            'app' => App::class
+        ]);
+
+        self::$app = $this->get('app');
+
+        Craft::setAlias('@estimatorwizard', $this->basePath);
+        Craft::setAlias('@estimatorwizardlib', dirname(__DIR__).'/lib');
 
         // Add in our console commands
         if (Craft::$app instanceof ConsoleApplication) {

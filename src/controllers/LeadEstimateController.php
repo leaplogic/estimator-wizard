@@ -35,7 +35,7 @@ use craft\web\Controller;
  * @package   EstimatorWizard
  * @since     1.0.0
  */
-class DefaultController extends Controller
+class LeadEstimateController extends Controller
 {
 
     // Protected Properties
@@ -46,7 +46,7 @@ class DefaultController extends Controller
      *         The actions must be in 'kebab-case'
      * @access protected
      */
-    protected $allowAnonymous = ['index', 'do-something'];
+    protected $allowAnonymous = ['index', 'view-lead-email'];
 
     // Public Methods
     // =========================================================================
@@ -64,13 +64,29 @@ class DefaultController extends Controller
         return $result;
     }
 
+
+    /**
+     * Handle a request going to our plugin's save-lead-estimate action URL,
+     * e.g.: actions/estimator-wizard/default
+     *
+     * @return mixed
+     */
+	public function actionSaveLeadEstimate() 
+	{
+        $this->requirePostRequest();
+
+        $request = Craft::$app->getRequest();
+        
+    }
+
+
     /**
      * Handle a request going to our plugin's actionDoSomething URL,
      * e.g.: actions/estimator-wizard/default/do-something
      *
      * @return mixed
      */
-    public function actionDoSomething()
+    public function actionViewLeadEmail()
     {
         $result = 'Welcome to the DefaultController actionDoSomething() method';
 

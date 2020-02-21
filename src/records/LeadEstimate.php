@@ -11,9 +11,12 @@
 namespace leaplogic\estimatorwizard\records;
 
 use leaplogic\estimatorwizard\EstimatorWizard;
+use leaplogic\estimatorwizard\records\LeadStatus as LeadStatusRecord;
 
 use Craft;
 use craft\db\ActiveRecord;
+use yii\db\ActiveQueryInterface;
+use craft\records\Element;
 
 /**
  * EstimatorWizardRecord Record
@@ -31,7 +34,7 @@ use craft\db\ActiveRecord;
  * @package   EstimatorWizard
  * @since     1.0.0
  */
-class EstimatorWizardRecord extends ActiveRecord
+class LeadEstimate extends ActiveRecord
 {
     // Public Static Methods
     // =========================================================================
@@ -50,6 +53,27 @@ class EstimatorWizardRecord extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%estimatorwizard_estimatorwizardrecord}}';
+        return '{{%estimatorwizard_leadestimates}}';
+    }
+
+
+    /**
+     * Returns the leadsestimate’s element.
+     *
+     * @return ActiveQueryInterface The relational query object.
+     */
+    public function getElement(): ActiveQueryInterface
+    {
+        return $this->hasOne(Element::class, ['id' => 'id']);
+    }
+
+    /**
+     * Returns the Lead Statuses.
+     *
+     * @return ActiveQueryInterface The relational query object.
+     */
+    public function getLeadStatuses(): ActiveQueryInterface
+    {
+        return $this->hasMany(LeadStatusRecord::class, ['statusId' => 'id']);
     }
 }
