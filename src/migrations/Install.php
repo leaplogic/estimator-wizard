@@ -117,7 +117,7 @@ class Install extends Migration
                     'contactName' => $this->string(255)->defaultValue(''),
                     'contactEmail' => $this->string(255)->defaultValue(''),
                     'contactPhone' => $this->string(255)->defaultValue(''),
-                    'contactZip' => $this->integer(),
+                    'contactZipCode' => $this->integer(),
                     'contactCustomer' => $this->boolean()
                 ]
             );
