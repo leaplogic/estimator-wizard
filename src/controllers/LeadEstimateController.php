@@ -66,11 +66,26 @@ class LeadEstimateController extends Controller
      *
      * @return mixed
      */
+    // public function actionIndex()
+    // {
+    //     $result = 'Welcome to the DefaultController actionIndex() method';
+
+    //     return $result;
+    // }
+
     public function actionIndex()
     {
-        $result = 'Welcome to the DefaultController actionIndex() method';
+        /** @var SproutForms $plugin */
+        $plugin = Craft::$app->plugins->getPlugin('estimator-wizard');
 
-        return $result;
+        /** @var Settings $settings */
+        $settings = $plugin->getSettings();
+
+        $variables = [
+            'settings' => $settings
+        ];
+
+        return $this->renderTemplate('estimator-wizard/leads/', $variables);
     }
 
 

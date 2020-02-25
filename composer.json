@@ -22,11 +22,11 @@
         }
     ],
     "require": {
-        "craftcms/cms": "^3.0.0-RC1"
+        "craftcms/cms": "^3.4.0"
     },
     "autoload": {
         "psr-4": {
-          "leaplogic\\estimatorwizard\\": "src/",
+          "leaplogic\\estimatorwizard\\": "src/"
         }
     },
     "extra": {
@@ -36,7 +36,7 @@
         "hasCpSection": true,
         "changelogUrl": "https://raw.githubusercontent.com/leaplogic/estimator-wizard/estimator-wizard/master/CHANGELOG.md",
         "components": {
-            "estimatorWizardService": "leaplogic\\estimatorwizard\\services\\EstimatorWizardService"
+            "leads": "leaplogic\\estimatorwizard\\services\\Leads"
         },
         "class": "leaplogic\\estimatorwizard\\EstimatorWizard"
     }

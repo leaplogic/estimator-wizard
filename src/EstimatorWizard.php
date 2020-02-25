@@ -10,8 +10,9 @@
 
 namespace leaplogic\estimatorwizard;
 
-use leaplogic\estimatorwizard\services\EstimatorWizardService as EstimatorWizardServiceService;
+use leaplogic\estimatorwizard\services\App;
 use leaplogic\estimatorwizard\models\Settings;
+use leaplogic\estimatorwizsrd\elements\LeadEstimate;
 
 use Craft;
 use craft\base\Plugin;
@@ -47,7 +48,6 @@ class EstimatorWizard extends Plugin
 {
     // Static Properties
     // =========================================================================
-
     /**
      * Static property that is an instance of this plugin class so that it can be accessed via
      * EstimatorWizard::$plugin
@@ -65,6 +65,8 @@ class EstimatorWizard extends Plugin
 
     // Public Properties
     // =========================================================================
+
+    public static $pluginHandle = 'estimator-wizard';
 
     /**
      * To execute your plugin’s migrations, you’ll need to increase its schema version.
@@ -99,49 +101,40 @@ class EstimatorWizard extends Plugin
         self::$app = $this->get('app');
 
         Craft::setAlias('@estimatorwizard', $this->basePath);
-        Craft::setAlias('@estimatorwizardlib', dirname(__DIR__).'/lib');
 
-        // Add in our console commands
-        if (Craft::$app instanceof ConsoleApplication) {
-            $this->controllerNamespace = 'leaplogic\estimatorwizard\console\controllers';
-        }
 
         // Register our site routes
         Event::on(
             UrlManager::class,
-            UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
-                $event->rules['siteActionTrigger1'] = 'estimator-wizard/default';
-            }
-        );
-
-        // Register our CP routes
-        Event::on(
-            UrlManager::class,
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
-                $event->rules['cpActionTrigger1'] = 'estimator-wizard/default/do-something';
+                $event->rules['estimator-wizard'] = 'estimator-wizard/lead-estimate/index';
+                $event->rules['estimator-wizard/leads/edit/<leadId:\d+>'] = "estimator-wizard/lead-estimate/_edit";
+                $event->rules['estimator-wizard/settings'] = 'estimator-wizard/settings/index';
+                $event->rules['estimator-wizard/settings/lead-statuses/new'] = "estimator-wizard/lead-statuses/_edit";
+                $event->rules['estimator-wizard/settings/lead-statuses/<leadStatusId:\d+>'] = 'estimator-wizard/lead-statuses/_edit';
+
             }
         );
 
-        // Register our elements
+        // // Register our CP routes
+        // Event::on(
+        //     UrlManager::class,
+        //     UrlManager::EVENT_REGISTER_CP_URL_RULES,
+        //     function (RegisterUrlRulesEvent $event) {
+        //         $event->rules['cpActionTrigger1'] = 'estimator-wizard/default/do-something';
+        //     }
+        // );
+
+        // // Register our elements
         Event::on(
             Elements::class,
             Elements::EVENT_REGISTER_ELEMENT_TYPES,
             function (RegisterComponentTypesEvent $event) {
+                $event->types[] = LeadEstimate::class;
             }
         );
 
-        // Do something after we're installed
-        Event::on(
-            Plugins::class,
-            Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-            function (PluginEvent $event) {
-                if ($event->plugin === $this) {
-                    // We were just installed
-                }
-            }
-        );
 
 /**
  * Logging in Craft involves using one of the following methods:
@@ -161,14 +154,14 @@ class EstimatorWizard extends Plugin
  *
  * http://www.yiiframework.com/doc-2.0/guide-runtime-logging.html
  */
-        Craft::info(
-            Craft::t(
-                'estimator-wizard',
-                '{name} plugin loaded',
-                ['name' => $this->name]
-            ),
-            __METHOD__
-        );
+        // Craft::info(
+        //     Craft::t(
+        //         'estimator-wizard',
+        //         '{name} plugin loaded',
+        //         ['name' => 'Estimator Wizard']
+        //     ),
+        //     __METHOD__
+        // );
     }
 
     // Protected Methods
@@ -193,10 +186,34 @@ class EstimatorWizard extends Plugin
     protected function settingsHtml(): string
     {
         return Craft::$app->view->renderTemplate(
-            'estimator-wizard/settings',
+            'estimator-wizard/settings/general',
             [
                 'settings' => $this->getSettings()
             ]
         );
+    }
+    
+
+    /**
+     * @return array
+     */
+    private function getCpUrlRules(): array
+    {
+        return [
+
+            'estimator-wizard/leads' =>
+                'estimator-wizard/leads/index',
+            'estimator-wizard/leads/edit/<leadId:\d+>' =>
+                'estimator-wizard/leads/edit',
+            'estimator-wizard/settings/lead-statuses/new' =>
+                'estimator-wizard/lead-statuses/edit',
+            'estimator-wizard/settings/lead-statuses/<leadStatusId:\d+>' =>
+                'estimator-wizard/lead-statuses/edit',
+            // Settings
+            'estimator-wizard/settings/<settingsSectionHandle:.*>' =>
+                'sprout/settings/edit-settings',
+            'estimator-wizard/settings' =>
+                'sprout/settings/edit-settings'
+        ];
     }
 }
