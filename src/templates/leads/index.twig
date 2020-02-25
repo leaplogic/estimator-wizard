@@ -3,5 +3,11 @@
 {% set selectedSubnavItem = craft.app.request.getSegment(2) %}
 
 {% set title = "Lead Estimates"|t %}
-{% set elementType = 'leaplogic\\estimator-wizard\\elements\\LeadEstimate' %}
+{% set elementType = 'leaplogic\\estimatorwizard\\elements\\LeadEstimate' %}
 
+{% block actionButton %}
+    {# <div class="buttons">
+        <a id="create-new-lead" class="btn submit add icon"
+            href="{{ url('estimator-wizard/lead-estimates/new') }}">{{ "New Lead Estimate"|t('estimator-wizard') }}</a>
+    </div> #}
+{% endblock %}

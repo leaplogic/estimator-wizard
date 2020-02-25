@@ -23,6 +23,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use craft\web\Controller;
+use yii\helpers\VarDumper;
 
 /**
  * Default Controller
@@ -105,6 +106,7 @@ class LeadEstimateController extends Controller
 
         Craft::$app->getContent()->populateElementContent($lead);
 
+
         $statusId = $request->getBodyParam('statusId');
 
         if ($statusId !== null) {
@@ -144,7 +146,7 @@ class LeadEstimateController extends Controller
         $success = true;
 
         // Save Data and Trigger the onSaveLeadEvent
-        $success = EstimatorWizard::$app->leads->saveEntry($lead);
+        $success = EstimatorWizard::$app->leads->saveLead($lead);
 
         if (!$success) {
             return $this->redirectWithErrors($lead);
@@ -243,13 +245,14 @@ class LeadEstimateController extends Controller
         // Set the lead attributes, defaulting to the existing values for whatever is missing from the post data
         $path = $request->getBodyParam('path');
         $contact = $request->getBodyParam('contact');
-        $lead->$pathLabel = $path['label'];
-        $lead->$pathBasePrice = $path['price'];
-        $lead->$contactName = $contact['name'];
-        $lead->$contactEmail = $contact['email'];
-        $lead->$contactPhone = $contact['phone'];
-        $lead->$contactZipCode = $contact['zipCode'];
-        $lead->$contactCustomer = $contact['previousCustomer'];
+        //VarDumper::dump($path, 5, true);exit;
+        $lead->pathLabel = $path['label'];
+        $lead->pathBasePrice = $path['price'];
+        $lead->contactName = $contact['name'];
+        $lead->contactEmail = $contact['email'];
+        $lead->contactPhone = $contact['phone'];
+        $lead->contactZipCode = $contact['zipCode'];
+        $lead->contactCustomer = $contact['previousCustomer'];
 
     }
 

@@ -1,27 +1,21 @@
-{% requireAdmin %}
 {% extends "_layouts/cp" %}
 {% import "_includes/forms" as forms %}
 
 {% set title  = "Settings"|t('estimator-wizard') %}
-{% set bodyClass = craft.app.request.getSegments()|slice(0, 3)|join(' ') %}
+{% set actionUrl = 'estimator-wizard/settings/save-settings' %}
+{% set settings = settings ?? plugin.getSettings() %}
 
-{% set subnav = {
-    leads: {
-        label: "Leads"|t('estimator-wizard'),
-        url: cpUrl('estimator-wizard/leads')
-    }
-} %}
+{% set fullPageForm = true %}
 
-{% if currentUser.admin %}
-    {% set subnav = subnav|merge({
-        settings: {
-            label: "Settings"|t('estimator-wizard'),
-            url: cpUrl('estimator-wizard/settings')
-        }
-    }) %}
-{% endif %}
+{% block head %}
+    {{ parent() }}
+{% endblock %}
 
-{% set selectedSubnavItem = craft.app.request.getSegment(2) %}
+
+{% set crumbs = [
+    { label: "Settings"|t('estimator-wizard'), url: url('estimator-wizard/settings/general') }
+] %}
+
 {% set selectedSidebarItem = craft.app.request.getSegment(3) %}
 
 {% set sidebar %}
@@ -32,30 +26,31 @@
                     {% if selectedSidebarItem == 'general' %}class="sel"{% endif %}>{{ "General"|t('estimator-wizard') }}</a>
             </li>
 
-            <li><a href="{{ url('estimator-wizard/settings/leadstatuses') }}"
+            <li><a href="{{ url('estimator-wizard/settings/lead-statuses') }}"
                     {% if selectedSidebarItem == 'leadstatuses' %}class="sel"{% endif %}>{{ "Lead Statuses"|t('estimator-wizard') }}</a>
             </li>
-
         </ul>
     </nav>
 
 {% endset %}
 
-{# {% do view.registerAssetBundle("leaplogic\\estimatorwizard\\assetbundles\\estimatorwizard\\EstimatorWizardAsset") %} #}
 {% set content %}
-{{ forms.textField({
-    label: 'Email Leads To',
-    instructions: 'Comma separated list of email addresses.',
-    id: 'emailTo',
-    name: 'emailTo',
-    value: settings['emailTo']})
-}}
+    <input type="hidden" name="action" value="{{ actionUrl }}" />
+    <input type="hidden" name="redirect" value="{{ 'estimator-wizard/settings/general'|hash }}">
 
-{{ forms.textField({
-    label: 'Zip Codes',
-    instructions: 'Comma separated list of zip codes for lead contact validation.',
-    id: 'zipCodes',
-    name: 'zipCodes',
-    value: settings['zipCodes']})
-}}
+    {{ forms.textField({
+        label: 'Email Leads To',
+        instructions: 'Comma separated list of email addresses.',
+        id: 'emailTo',
+        name: 'settings[emailTo]',
+        value: settings['emailTo']})
+    }}
+
+    {{ forms.textField({
+        label: 'Zip Codes',
+        instructions: 'Comma separated list of zip codes for lead contact validation.',
+        id: 'zipCodes',
+        name: 'settings[zipCodes]',
+        value: settings['zipCodes']})
+    }}
 {% endset %}

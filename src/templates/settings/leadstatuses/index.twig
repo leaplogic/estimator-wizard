@@ -1,3 +1,42 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title  = "Settings"|t('estimator-wizard') %}
+{% set bodyClass = craft.app.request.getSegments()|slice(0, 3)|join(' ') %}
+{% set settings = settings ?? plugin.getSettings() %}
+{% set fullPageForm = false %}
+
+{% block head %}
+    {{ parent() }}
+{% endblock %}
+
+{% set crumbs    = [
+    { label: "Settings"|t('estimator-wizard'), url: url('estimator-wizard/settings/general') },
+    { label: "Lead Statuses"|t('estimator-wizard'), url: url('estimator-wizard/settings/lead-statuses') }
+] %}
+
+{% set selectedSidebarItem = craft.app.request.getSegment(3) %}
+
+{% set sidebar %}
+    <nav class="last">
+        <ul>
+            <li><a href="{{ cpUrl('estimator-wizard/settings/general') }}"
+                {% if selectedSidebarItem == 'general' %}class="sel"{% endif %}>{{ "General"|t('estimator-wizard') }}</a>
+            </li>
+
+            <li><a href="{{ url('estimator-wizard/settings/lead-statuses') }}"
+                {% if selectedSidebarItem == 'lead-statuses' %}class="sel"{% endif %}>{{ "Lead Statuses"|t('estimator-wizard') }}</a>
+            </li>
+        </ul>
+    </nav>
+{% endset %}
+
+{% block actionButton %}
+   <a href="{{ cpUrl('estimator-wizard/settings/lead-statuses/new') }}" class="btn submit add icon">{{ "New Lead Status"|t('estimator-wizard') }}</a>
+{% endblock %}
+
+{% set content  %}
+
 {% set tableData = [] %}
 {% if leadStatuses|length %}
     {% for leadStatus in leadStatuses %}
@@ -23,15 +62,15 @@
 {% endif %}
 
 <h2>{{ "Lead Statuses"|t('estimator-wizard') }}</h2>
-<p>{{ "Define the statuses that can be set on form leads once they’ve been completed."|t('estimator-wizard') }}</p>
+<p>{{ "Define the statuses that can be set on lead estimates once they’ve been completed."|t('estimator-wizard') }}</p>
 
 <div id="lead-statuses-admin-table"></div>
 
+{% endset %}
+
 {% do view.registerAssetBundle('craft\\web\\assets\\admintable\\AdminTableAsset') -%}
 
-{# @todo - Not yet supported: deleteFailMessage
-    "Unable to delete status. Please remove this status from all Form Leads first."
-     Also no way to disable a particular row from being deleted. Ideally we could just hide the delete button. #}
+
 {% js %}
     var columns = [
     {

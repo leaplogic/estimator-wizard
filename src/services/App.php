@@ -11,6 +11,7 @@ class App extends Component
      * @var Leads
      */
     public $leads;
+    public $settings;
 
     public function init()
     {

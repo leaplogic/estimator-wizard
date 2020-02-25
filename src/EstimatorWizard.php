@@ -11,8 +11,8 @@
 namespace leaplogic\estimatorwizard;
 
 use leaplogic\estimatorwizard\services\App;
-use leaplogic\estimatorwizard\models\Settings;
-use leaplogic\estimatorwizsrd\elements\LeadEstimate;
+use leaplogic\estimatorwizard\models\Settings as SettingsModel;
+use leaplogic\estimatorwizard\elements\LeadEstimate;
 
 use Craft;
 use craft\base\Plugin;
@@ -40,9 +40,6 @@ use yii\base\Event;
  * @package   EstimatorWizard
  * @since     1.0.0
  *
- * @property  EstimatorWizardServiceService $estimatorWizardService
- * @property  Settings $settings
- * @method    Settings getSettings()
  */
 class EstimatorWizard extends Plugin
 {
@@ -78,17 +75,7 @@ class EstimatorWizard extends Plugin
     // Public Methods
     // =========================================================================
 
-    /**
-     * Set our $plugin static property to this class so that it can be accessed via
-     * EstimatorWizard::$plugin
-     *
-     * Called after the plugin class is instantiated; do any one-time initialization
-     * here such as hooks and events.
-     *
-     * If you have a '/vendor/autoload.php' file, it will be loaded for you automatically;
-     * you do not need to load it in your init() method.
-     *
-     */
+
     public function init()
     {
         parent::init();
@@ -109,20 +96,21 @@ class EstimatorWizard extends Plugin
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
                 $event->rules['estimator-wizard'] = 'estimator-wizard/lead-estimate/index';
-                $event->rules['estimator-wizard/leads/edit/<leadId:\d+>'] = "estimator-wizard/lead-estimate/_edit";
-                $event->rules['estimator-wizard/settings'] = 'estimator-wizard/settings/index';
-                $event->rules['estimator-wizard/settings/lead-statuses/new'] = "estimator-wizard/lead-statuses/_edit";
-                $event->rules['estimator-wizard/settings/lead-statuses/<leadStatusId:\d+>'] = 'estimator-wizard/lead-statuses/_edit';
+                $event->rules['estimator-wizard/lead-estimates/edit/<leadId:\d+>'] = "estimator-wizard/lead-estimate/edit-lead";
+                $event->rules['estimator-wizard/lead-estimates/new'] = "estimator-wizard/lead-estimate/edit-lead";
+                $event->rules['estimator-wizard/settings/general'] = 'estimator-wizard/settings/index';
+                $event->rules['estimator-wizard/settings/lead-statuses'] = 'estimator-wizard/lead-statuses/index';
+                $event->rules['estimator-wizard/settings/lead-statuses/new'] = "estimator-wizard/lead-statuses/edit";
+                $event->rules['estimator-wizard/settings/lead-statuses/<leadStatusId:\d+>'] = 'estimator-wizard/lead-statuses/edit';
 
             }
         );
 
-        // // Register our CP routes
         // Event::on(
-        //     UrlManager::class,
-        //     UrlManager::EVENT_REGISTER_CP_URL_RULES,
-        //     function (RegisterUrlRulesEvent $event) {
-        //         $event->rules['cpActionTrigger1'] = 'estimator-wizard/default/do-something';
+        //     UrlManager::class, 
+        //     UrlManager::EVENT_REGISTER_SITE_URL_RULES, 
+        //     function(RegisterUrlRulesEvent $event) {
+        //         $event->rules['estimator-wizard/save-lead-estimate'] = 'estimator-wizard/lead-estimate/save-lead-estimate';
         //     }
         // );
 
@@ -134,6 +122,11 @@ class EstimatorWizard extends Plugin
                 $event->types[] = LeadEstimate::class;
             }
         );
+
+        $this->setComponents([
+            'leads' => \leaplogic\estimatorwizard\services\Leads::class,
+			'settings' => \leaplogic\estimatorwizard\services\Settings::class,
+        ]);
 
 
 /**
@@ -174,8 +167,9 @@ class EstimatorWizard extends Plugin
      */
     protected function createSettingsModel()
     {
-        return new Settings();
+        return new SettingsModel();
     }
+    
 
     /**
      * Returns the rendered settings HTML, which will be inserted into the content
@@ -193,27 +187,4 @@ class EstimatorWizard extends Plugin
         );
     }
     
-
-    /**
-     * @return array
-     */
-    private function getCpUrlRules(): array
-    {
-        return [
-
-            'estimator-wizard/leads' =>
-                'estimator-wizard/leads/index',
-            'estimator-wizard/leads/edit/<leadId:\d+>' =>
-                'estimator-wizard/leads/edit',
-            'estimator-wizard/settings/lead-statuses/new' =>
-                'estimator-wizard/lead-statuses/edit',
-            'estimator-wizard/settings/lead-statuses/<leadStatusId:\d+>' =>
-                'estimator-wizard/lead-statuses/edit',
-            // Settings
-            'estimator-wizard/settings/<settingsSectionHandle:.*>' =>
-                'sprout/settings/edit-settings',
-            'estimator-wizard/settings' =>
-                'sprout/settings/edit-settings'
-        ];
-    }
 }

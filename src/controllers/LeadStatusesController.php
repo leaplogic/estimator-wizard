@@ -17,6 +17,21 @@ use yii\web\Response;
 
 class LeadStatusesController extends BaseController
 {
+
+
+    public function actionIndex()
+    {
+        $plugin = Craft::$app->getPlugins()->getPlugin('estimator-wizard');
+        $leadStatuses = EstimatorWizard::$app->leads->getAllLeadStatuses();
+
+        return $this->renderTemplate('estimator-wizard/settings/leadstatuses/index', [
+            'error' => (isset($error) ? $error : null),
+            'settings' => $plugin->getSettings(),
+            'leadStatuses' => $leadStatuses
+        ]);
+    }
+
+
     /**
      * @param int|null         $leadStatusId
      * @param LeadStatus|null $leadStatus
