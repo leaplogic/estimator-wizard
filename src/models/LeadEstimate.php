@@ -57,6 +57,11 @@ class LeadEstimate extends Model
      */
     public $contactCustomer;
 
+     /**
+     * @var text
+     */
+    public $notes;
+
     /**
      * @var string
      */
@@ -81,6 +86,7 @@ class LeadEstimate extends Model
     {
         return Craft::t('estimator-wizard', $this->name);
     }
+
 
     /**
      * @inheritdoc
