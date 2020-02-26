@@ -11,7 +11,7 @@ use craft\db\ActiveRecord;
  * @property $changedData
  * @property $status
  */
-class SubmissionLog extends ActiveRecord
+class LeadStatusLog extends ActiveRecord
 {
     /**
      * @inheritdoc
