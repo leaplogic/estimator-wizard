@@ -37,7 +37,8 @@
         "changelogUrl": "https://raw.githubusercontent.com/leaplogic/estimator-wizard/estimator-wizard/master/CHANGELOG.md",
         "components": {
             "leads": "leaplogic\\estimatorwizard\\services\\Leads",
-            "settings": "leaplogic\\estimatorwizard\\services\\Settings"
+            "settings": "leaplogic\\estimatorwizard\\services\\Settings",
+            "log": "leaplogic\\estimatorwizard\\services\\Log"
         },
         "class": "leaplogic\\estimatorwizard\\EstimatorWizard"
     }
