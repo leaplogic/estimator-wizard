@@ -56,7 +56,7 @@ class LeadEstimateController extends Controller
      *         The actions must be in 'kebab-case'
      * @access protected
      */
-    protected $allowAnonymous = ['index', 'save-lead-estimate', 'view-lead-email'];
+    protected $allowAnonymous = ['action-save-lead-estimate', 'view-lead-email'];
 
     // Public Methods
     // =========================================================================
@@ -67,12 +67,6 @@ class LeadEstimateController extends Controller
      *
      * @return mixed
      */
-    // public function actionIndex()
-    // {
-    //     $result = 'Welcome to the DefaultController actionIndex() method';
-
-    //     return $result;
-    // }
 
     public function actionIndex()
     {
@@ -83,7 +77,8 @@ class LeadEstimateController extends Controller
         $settings = $plugin->getSettings();
 
         $variables = [
-            'settings' => $settings
+            'settings' => $settings,
+
         ];
 
         return $this->renderTemplate('estimator-wizard/leads/', $variables);
@@ -100,6 +95,7 @@ class LeadEstimateController extends Controller
 	{
         $this->requirePostRequest();
 
+        $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
         $request = Craft::$app->getRequest();
 
         $lead = $this->getLeadModel();
@@ -116,9 +112,15 @@ class LeadEstimateController extends Controller
         // Populate the entry with post data
         $this->populateLeadModel($lead);
 
+        $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
+        $zipCodeWhiteList = array_map('trim', explode(',', $settings->zipCodes));
+        $inWhiteList = in_array($lead->contactZipCode, $zipCodeWhiteList);
+
         $lead->statusId = $lead->statusId != null
             ? $lead->statusId
-            : EstimatorWizard::$app->leads->getDefaultLeadStatusId();
+            : (($lead->statusId = !$inWhiteList) 
+                ? $nonWhiteListStatus->id 
+                : EstimatorWizard::$app->leads->getDefaultLeadStatusId());
 
 
         $success = $lead->validate();
@@ -152,13 +154,15 @@ class LeadEstimateController extends Controller
             return $this->redirectWithErrors($lead);
         }
 
-        $this->createLastLeadId($lead);
-
         if (Craft::$app->getRequest()->getAcceptsJson()) {
             return $this->asJson([
                 'success' => true
             ]);
         }
+        // // expecting to be json unless otherwise determined.
+        // return $this->asJson([
+        //     'success' => true
+        // ]);
 
         Craft::$app->getSession()->setNotice(Craft::t('estimator-wizard', 'Lead Estimate saved.'));
 
@@ -248,11 +252,14 @@ class LeadEstimateController extends Controller
         //VarDumper::dump($path, 5, true);exit;
         $lead->pathLabel = $path['label'];
         $lead->pathBasePrice = $path['price'];
+        $lead->results = $request->getBodyParam('data');
         $lead->contactName = $contact['name'];
         $lead->contactEmail = $contact['email'];
         $lead->contactPhone = $contact['phone'];
         $lead->contactZipCode = $contact['zipCode'];
         $lead->contactCustomer = $contact['previousCustomer'];
+        $lead->notes = $request->getBodyParam('notes');
+        $lead->trafficSource = $request->getBodyParam('trafficSource');
 
     }
 
@@ -278,7 +285,7 @@ class LeadEstimateController extends Controller
             return new LeadEstimateElement();
         }
 
-        $lead = EstimatorWizard::$app->entries->getLeadById($leadId);
+        $lead = EstimatorWizard::$app->leads->getLeadById($leadId);
 
         if (!$lead) {
             $message = Craft::t('estimator-wizard', 'No lead estimate exists with the given ID: {id}', [
