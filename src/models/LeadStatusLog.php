@@ -26,9 +26,9 @@ class LeadStatusLog extends Model
     public $status;
 
     /**
-     * @var string
+     * @var int|null
      */
-    public $changedData;
+    public $authorId;
 
     /**
      * @var string
