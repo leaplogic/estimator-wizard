@@ -47,10 +47,19 @@
     }}
 
     {{ forms.textField({
-        label: 'Zip Codes',
+        label: 'Zip Code Witelist',
         instructions: 'Comma separated list of zip codes for lead contact validation.',
         id: 'zipCodes',
         name: 'settings[zipCodes]',
         value: settings['zipCodes']})
+    }}
+
+    {{ forms.selectField({
+        label: 'Non-Whitelist Initial Status',
+        instructions: 'Select status that will be set if lead zipcode is not in whitelist.',
+        id: 'statusByZip',
+        options: craft.estimatorWizard.getStatusesAsOptions(),
+        name: 'settings[statusByZip]',
+        value: settings['statusByZip']})
     }}
 {% endset %}

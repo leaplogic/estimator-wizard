@@ -48,4 +48,11 @@ class Settings extends Model
      */
     public $zipCodes;
 
+    /**
+     * StatusByZip
+     *
+     * @var string
+     */
+    public $statusByZip;
+
 }

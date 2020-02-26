@@ -96,18 +96,18 @@
     ];
 
     new Craft.VueAdminTable({
-    columns: columns,
-    container: '#lead-statuses-admin-table',
-    deleteAction: 'estimator-wizard/lead-statuses/delete',
-    deleteConfirmationMessage: Craft.t('estimator-wizard', "Are you sure you want to delete the Lead Status “{name}”?"),
-    deleteSuccessMessage: Craft.t('estimator-wizard', "Lead status deleted"),
-    deleteFailMessage: Craft.t('estimator-wizard', "Unable to delete status. Status must not be used on existing entries."),
-    emptyMessage: Craft.t('estimator-wizard', 'No lead statuses exist yet.'),
-    minItems: 2,
-    padded: true,
-    reorderAction: 'estimator-wizard/lead-statuses/reorder',
-    reorderSuccessMessage: Craft.t('estimator-wizard', 'Lead statuses reordered.'),
-    reorderFailMessage: Craft.t('estimator-wizard', 'Couldn’t reorder statuses.'),
-    tableData: {{ tableData|json_encode|raw }}
+        columns: columns,
+        container: '#lead-statuses-admin-table',
+        deleteAction: 'estimator-wizard/lead-statuses/delete',
+        deleteConfirmationMessage: Craft.t('estimator-wizard', "Are you sure you want to delete the Lead Status “{name}”?"),
+        deleteSuccessMessage: Craft.t('estimator-wizard', "Lead status deleted"),
+        deleteFailMessage: Craft.t('estimator-wizard', "Unable to delete status. Status must not be used on existing entries."),
+        emptyMessage: Craft.t('estimator-wizard', 'No lead statuses exist yet.'),
+        minItems: 2,
+        padded: true,
+        reorderAction: 'estimator-wizard/lead-statuses/reorder',
+        reorderSuccessMessage: Craft.t('estimator-wizard', 'Lead statuses reordered.'),
+        reorderFailMessage: Craft.t('estimator-wizard', 'Couldn’t reorder statuses.'),
+        tableData: {{ tableData|json_encode|raw }}
     });
 {% endjs %}
