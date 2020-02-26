@@ -21,5 +21,5 @@ class OnSaveLeadEvent extends Event
     /**
      * @var bool
      */
-    public $isNewEntry = true;
+    public $isNewLead = true;
 }
