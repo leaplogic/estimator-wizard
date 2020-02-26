@@ -25,8 +25,4 @@ class OnBeforeSaveLeadEvent extends Event
      */
     public $isValid = true;
 
-    /**
-     * @var bool
-     */
-    public $fakeIt = false;
 }
