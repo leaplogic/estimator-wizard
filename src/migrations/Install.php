@@ -57,7 +57,7 @@ class Install extends Migration
     {
         $this->driver = Craft::$app->getConfig()->getDb();
         if ($this->createTables()) {
-            $this->createIndexes();
+           // $this->createIndexes();
             $this->addForeignKeys();
             // Refresh the db schema caches
             Craft::$app->db->schema->refresh();
@@ -79,7 +79,9 @@ class Install extends Migration
      */
     public function safeDown()
     {
-        $this->driver = Craft::$app->getConfig()->getDb();
+        //$this->driver = Craft::$app->getConfig()->getDb();
+        $this->removeForiegnKeys();
+        //$this->removeIndexes();
         $this->removeTables();
 
         return true;
@@ -108,8 +110,7 @@ class Install extends Migration
                     'dateCreated' => $this->dateTime()->notNull(),
                     'dateUpdated' => $this->dateTime()->notNull(),
                     'uid' => $this->uid(),
-                // Custom columns in the table
-                    'siteId' => $this->integer()->notNull(),
+                    // Custom columns in the table
                     'statusId' => $this->integer()->notNull(),
                     'pathLabel' => $this->string(255)->defaultValue(''),
                     'pathBasePrice' => $this->json(),
@@ -118,7 +119,9 @@ class Install extends Migration
                     'contactEmail' => $this->string(255)->defaultValue(''),
                     'contactPhone' => $this->string(255)->defaultValue(''),
                     'contactZipCode' => $this->integer(),
-                    'contactCustomer' => $this->boolean()
+                    'contactCustomer' => $this->boolean(),
+                    'trafficSource' => $this->string(255)->defaultValue('organic'),
+                    'notes' => $this->text(),
                 ]
             );
 
@@ -144,7 +147,7 @@ class Install extends Migration
                 'id' => $this->primaryKey(),
                 'leadId' => $this->integer(),
                 'status' => $this->string()->notNull(),
-                'changedData' => $this->text(),
+                'authorId' => $this->integer()->notNull(),
                 'dateCreated' => $this->dateTime()->notNull(),
                 'dateUpdated' => $this->dateTime()->notNull(),
                 'uid' => $this->uid(),
@@ -161,25 +164,7 @@ class Install extends Migration
      */
     protected function createIndexes()
     {
-        // estimatorwizard_leadstatuslog table
-        $this->createIndex(
-            $this->db->getIndexName(
-                '{{%estimatorwizard_leadstatuslog}}',
-                'leadId',
-                true
-            ),
-            '{{%estimatorwizard_leadstatuslog}}',
-            'leadId',
-            true
-        );
 
-        // Additional commands depending on the db driver
-        switch ($this->driver) {
-            case 'mysql':
-                break;
-            case 'pgsql':
-                break;
-        }
     }
 
     /**
@@ -189,16 +174,10 @@ class Install extends Migration
      */
     protected function addForeignKeys()
     {
-        // estimatorwizard_leadestimate table
+
         $this->addForeignKey(
-            $this->db->getForeignKeyName('{{%estimatorwizard_leadestimates}}', 'siteId'),
-            '{{%estimatorwizard_leadestimates}}',
-            'siteId',
-            '{{%sites}}',
-            'id',
-            'CASCADE',
-            'CASCADE'
-        );
+            $this->db->getForeignKeyName('{{%estimatorwizard_leadestimates}}', 'id'),
+            '{{%estimatorwizard_leadestimates}}', 'id', '{{%elements}}', 'id', 'CASCADE', null);
 
         // estimatorwizard_leadstatuslog table
         $this->addForeignKey(
@@ -221,17 +200,45 @@ class Install extends Migration
         // populate default Lead Statuses
         $defaultLeadStatuses = [
             0 => [
-                'name' => 'Unread',
-                'handle' => 'unread',
+                'name' => 'Unverified',
+                'handle' => 'unverified',
                 'color' => 'blue',
                 'sortOrder' => 1,
                 'isDefault' => 1
             ],
             1 => [
-                'name' => 'Read',
-                'handle' => 'read',
-                'color' => 'grey',
+                'name' => 'Qualified',
+                'handle' => 'qualified',
+                'color' => 'green',
                 'sortOrder' => 2,
+                'isDefault' => 0
+            ],
+            2 => [
+                'name' => 'Qualified (Out of Area)',
+                'handle' => 'qualified-out-of-area',
+                'color' => 'orange',
+                'sortOrder' => 3,
+                'isDefault' => 0
+            ],
+            3 => [
+                'name' => 'Unqualified (Phone)',
+                'handle' => 'unqualified-phone',
+                'color' => 'red',
+                'sortOrder' => 4,
+                'isDefault' => 0
+            ],
+            4 => [
+                'name' => 'Unqualified (Email)',
+                'handle' => 'unqualified-email',
+                'color' => 'red',
+                'sortOrder' => 5,
+                'isDefault' => 0
+            ],
+            5 => [
+                'name' => 'Unqualified (Spam)',
+                'handle' => 'unqualified-spam',
+                'color' => 'red',
+                'sortOrder' => 6,
                 'isDefault' => 0
             ]
         ];
@@ -258,5 +265,14 @@ class Install extends Migration
         $this->dropTableIfExists('{{%estimatorwizard_leadestimates}}');
         $this->dropTableIfExists('{{%estimatorwizard_leadstatuses}}');
         $this->dropTableIfExists('{{%estimatorwizard_leadstatuslog}}');
+    }
+
+    protected function removeForiegnKeys() {
+        $this->dropForeignKey($this->db->getForeignKeyName('{{%estimatorwizard_leadestimates}}', 'id'), '{{%estimatorwizard_leadestimates}}');
+        $this->dropForeignKey($this->db->getForeignKeyName('{{%estimatorwizard_leadstatuslog}}', 'leadId'), '{{%estimatorwizard_leadstatuslog}}');
+    }
+
+    protected function removeIndexes() {
+        
     }
 }
