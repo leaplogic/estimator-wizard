@@ -13,6 +13,8 @@ namespace leaplogic\estimatorwizard;
 use leaplogic\estimatorwizard\services\App;
 use leaplogic\estimatorwizard\models\Settings as SettingsModel;
 use leaplogic\estimatorwizard\elements\LeadEstimate;
+use leaplogic\estimatorwizard\web\twig\variables\EstimatorWizardVariables;
+use leaplogic\estimatorwizard\events\OnSaveLeadEvent;
 
 use Craft;
 use craft\base\Plugin;
@@ -20,9 +22,11 @@ use craft\services\Plugins;
 use craft\events\PluginEvent;
 use craft\console\Application as ConsoleApplication;
 use craft\web\UrlManager;
+use craft\helpers\UrlHelper;
 use craft\services\Elements;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\web\twig\variables\CraftVariable;
 
 use yii\base\Event;
 
@@ -106,15 +110,11 @@ class EstimatorWizard extends Plugin
             }
         );
 
-        // Event::on(
-        //     UrlManager::class, 
-        //     UrlManager::EVENT_REGISTER_SITE_URL_RULES, 
-        //     function(RegisterUrlRulesEvent $event) {
-        //         $event->rules['estimator-wizard/save-lead-estimate'] = 'estimator-wizard/lead-estimate/save-lead-estimate';
-        //     }
-        // );
+        Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, static function(Event $event) {
+            $event->sender->set('estimatorWizard', EstimatorWizardVariables::class);
+        });
 
-        // // Register our elements
+        // Register our elements
         Event::on(
             Elements::class,
             Elements::EVENT_REGISTER_ELEMENT_TYPES,
@@ -125,7 +125,8 @@ class EstimatorWizard extends Plugin
 
         $this->setComponents([
             'leads' => \leaplogic\estimatorwizard\services\Leads::class,
-			'settings' => \leaplogic\estimatorwizard\services\Settings::class,
+            'settings' => \leaplogic\estimatorwizard\services\Settings::class,
+            'log' => \leaplogic\estimatorwizard\services\Log::class,
         ]);
 
 
@@ -155,6 +156,40 @@ class EstimatorWizard extends Plugin
         //     ),
         //     __METHOD__
         // );
+    }
+
+
+        /**
+     * @return array|null
+     */
+    public function getCpNavItem()
+    {
+        $parent = parent::getCpNavItem();
+
+        $parent['label'] = "Estimator Wizard";
+
+        
+        $parent['subnav']['leads'] = [
+            'label' => Craft::t('estimator-wizard', 'Lead Estimates'),
+            'url' => 'estimator-wizard/'
+        ];
+        
+
+        if (Craft::$app->getUser()->getIsAdmin()) {
+            $parent['subnav']['settings'] = [
+                'label' => Craft::t('estimator-wizard', 'Settings'),
+                'url' => 'estimator-wizard/settings/general'
+            ];
+        }
+
+        return $parent;
+    }
+
+    public function getSettingsResponse()
+    {
+        $url = UrlHelper::cpUrl('estimator-wizard/settings/general');
+
+        return Craft::$app->getResponse()->redirect($url);
     }
 
     // Protected Methods
