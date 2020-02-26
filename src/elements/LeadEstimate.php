@@ -89,6 +89,8 @@ class LeadEstimate extends Element
     public $contactCustomer;
     public $statusId;
     public $statusHandle;
+    public $trafficSource;
+    public $notes;
 
     // Static Methods
     // =========================================================================
@@ -100,16 +102,20 @@ class LeadEstimate extends Element
      */
     public static function displayName(): string
     {
-        return Craft::t('estimator-wizard', 'Lead Estimates');
+        return Craft::t('estimator-wizard', 'Lead Estimate');
     }
 
+    public static function pluralDisplayName(): string
+    {
+        return Craft::t('estimator-wizard', 'Lead Estimates');
+    }
 
     /**
      * @inheritdoc
      */
     public static function refHandle()
     {
-        return 'leads';
+        return 'leadestimate';
     }
 
     /**
@@ -134,24 +140,33 @@ class LeadEstimate extends Element
     }
 
     /**
-     * Returns whether elements of this type have statuses.
-     *
-     * If this returns `true`, the element index template will show a Status menu
-     * by default, and your elements will get status indicator icons next to them.
-     *
-     * Use [[statuses()]] to customize which statuses the elements might have.
-     *
-     * @return bool Whether elements of this type have statuses.
-     * @see statuses()
+     * @inheritdoc
      */
-    public static function isLocalized(): bool
+    public static function trackChanges(): bool
+    {
+        return true;
+    }
+    
+     /**
+     * @inheritdoc
+     */
+    public static function hasStatuses(): bool
     {
         return true;
     }
 
-    public static function hasStatuses(): bool
+    protected static function defineSources(string $context = null): array
     {
-        return true;
+
+        $sources = [
+            [
+                'key' => '*',
+                'label' => Craft::t('app', 'All Leads'),
+                'criteria' => [],
+                'defaultSort' => ['createdDate', 'desc']
+            ]
+        ];
+        return $sources;
     }
 
 
@@ -161,10 +176,9 @@ class LeadEstimate extends Element
     public function getCpEditUrl()
     {
         return UrlHelper::cpUrl(
-            'estimator-wizard/leads/edit/'.$this->id
+            'estimator-wizard/lead-estimates/edit/'.$this->id
         );
     }
-
 
     public static function statuses(): array
     {
@@ -197,60 +211,17 @@ class LeadEstimate extends Element
     public function getStatus():string
     {
         $statusId = $this->statusId;
-
+        
         return EstimatorWizard::$app->leads->getLeadStatusById($statusId)->handle;
     }
 
 
     /**
-     * Creates an [[ElementQueryInterface]] instance for query purpose.
-     *
-     * The returned [[ElementQueryInterface]] instance can be further customized by calling
-     * methods defined in [[ElementQueryInterface]] before `one()` or `all()` is called to return
-     * populated [[ElementInterface]] instances. For example,
-     *
-     * ```php
-     * // Find the entry whose ID is 5
-     * $entry = Entry::find()->id(5)->one();
-     *
-     * // Find all assets and order them by their filename:
-     * $assets = Asset::find()
-     *     ->orderBy('filename')
-     *     ->all();
-     * ```
-     *
-     * If you want to define custom criteria parameters for your elements, you can do so by overriding
-     * this method and returning a custom query class. For example,
-     *
-     * ```php
-     * class Product extends Element
-     * {
-     *     public static function find()
-     *     {
-     *         // use ProductQuery instead of the default ElementQuery
-     *         return new ProductQuery(get_called_class());
-     *     }
-     * }
-     * ```
-     *
-     * You can also set default criteria parameters on the ElementQuery if you don’t have a need for
-     * a custom query class. For example,
-     *
-     * ```php
-     * class Customer extends ActiveRecord
-     * {
-     *     public static function find()
-     *     {
-     *         return parent::find()->limit(50);
-     *     }
-     * }
-     * ```
-     *
      * @return ElementQueryInterface The newly created [[ElementQueryInterface]] instance.
      */
     public static function find(): ElementQueryInterface
     {
-        return new ElementQuery(get_called_class());
+        return new LeadEstimateQuery(static::class);
     }
 
 
@@ -283,6 +254,41 @@ class LeadEstimate extends Element
         return true;
     }
 
+    public function pathPrice(): array 
+    {   
+        $price = $this->pathBasePrice;
+        return json_decode($price, true); 
+    }
+
+    public function steps(): array
+    {
+        return json_decode($this->results, true);
+    }
+
+    public function estimateLow(): string
+    {
+        $pathPrice = json_decode($this->pathBasePrice, true);
+        $prices = [];
+        $steps = json_decode($this->results, true);
+        foreach ($steps as $key => $value) {
+            array_push($prices, $value['price']['low']);
+        }
+        
+        return intval($pathPrice['low']) + intval(array_sum($prices));
+    }
+
+    public function estimateHigh(): string
+    {
+        $pathPrice = json_decode($this->pathBasePrice, true);
+        $prices = [];
+        $steps = json_decode($this->results, true);
+        foreach ($steps as $key => $value) {
+            array_push($prices, $value['price']['high']);
+        }
+        
+        return intval($pathPrice['high']) + intval(array_sum($prices));
+    }
+
 
 
     // Indexes, etc.
@@ -298,7 +304,6 @@ class LeadEstimate extends Element
         $html = Craft::$app->getView()->renderTemplateMacro('_includes/forms', 'textField', [
             [
                 'label' => Craft::t('app', 'Title'),
-                'siteId' => $this->siteId,
                 'id' => 'title',
                 'name' => 'title',
                 'value' => $this->title,
@@ -314,20 +319,49 @@ class LeadEstimate extends Element
         return $html;
     }
 
+    // protected static function defineSortOptions(): array
+    // {
+    //     $attributes = [
+    //         'estimatorwizard_leads.dateCreated' => Craft::t('estimator-wizard', 'Date Created'),
+    //         'estimatorwizard_leads.dateUpdated' => Craft::t('estimator-wizard', 'Date Updated'),
+    //     ];
+
+    //     return $attributes;
+    // }
+
 
     /**
      * @inheritdoc
      */
     protected static function defineTableAttributes(): array
     {
-        $attributes['pathLabel'] = ['label' => Craft::t('estimator-wizard', 'Path Label')];
-        $attributes['contactName'] = ['label' => Craft::t('estimator-wizard', 'Contact Name')];
+        $attributes['id'] = ['label' => Craft::t('estimator-wizard', 'ID')];
+        $attributes['contactName'] = ['label' => Craft::t('estimator-wizard', 'Contact')];
+        $attributes['pathLabel'] = ['label' => Craft::t('estimator-wizard', 'Path')];
         //$attributes['contactEmail'] = ['label' => Craft::t('estimator-wizard', 'Contact Email')];
         $attributes['dateCreated'] = ['label' => Craft::t('estimator-wizard', 'Date Created')];
-        $attributes['dateUpdated'] = ['label' => Craft::t('estimator-wizard', 'Date Updated')];
+        //$attributes['dateUpdated'] = ['label' => Craft::t('estimator-wizard', 'Date Updated')];
 
         return $attributes;
     }
+
+    protected static function defineSearchableAttributes(): array
+    {
+        return ['pathLabel', 'contactName'];
+    }
+
+    protected static function defineDefaultTableAttributes(string $source): array
+    {
+        return ['contactName', 'pathLabel', 'statusId', 'dateCreated', 'dateUpdated'];
+    }
+
+
+    public function getContentTable(): string
+    {
+        return "{{%estimatorwizard_leadestimates}}";
+    }
+
+
 
     // Events
     // -------------------------------------------------------------------------
@@ -341,6 +375,10 @@ class LeadEstimate extends Element
      */
     public function beforeSave(bool $isNew): bool
     {
+        if (!$isNew) {
+            $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
+        }
         return true;
     }
 
@@ -374,6 +412,8 @@ class LeadEstimate extends Element
         $record->contactPhone = $this->contactPhone;
         $record->contactZipCode = $this->contactZipCode;
         $record->contactCustomer = $this->contactCustomer;
+        $record->trafficSource = $this->trafficSource;
+        $record->notes = $this->notes;
 
         $record->save(false);
 
@@ -406,15 +446,6 @@ class LeadEstimate extends Element
     public function beforeDelete(): bool
     {
         return true;
-    }
-
-    /**
-     * Performs actions after an element is deleted.
-     *
-     * @return void
-     */
-    public function afterDelete()
-    {
     }
 
 }

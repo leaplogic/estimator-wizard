@@ -24,6 +24,18 @@ class LeadEstimateQuery extends ElementQuery
 
     public $status = [];
 
+    public $pathLabel;
+    public $pathBasePrice;
+    public $contactName;
+    public $contactEmail;
+    public $contactPhone;
+    public $results;
+    public $contactZipCode;
+    public $contactCustomer;
+    public $trafficSource;
+    public $notes;
+    
+
     /**
      * @inheritdoc
      */
@@ -158,6 +170,35 @@ class LeadEstimateQuery extends ElementQuery
 
 
     /**
+     * Sets the [[notes]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function notes($value): LeadEstimateQuery
+    {
+        $this->notes = $value;
+
+        return $this;
+    }
+
+     /**
+     * Sets the [[trafficSource]] property.
+     *
+     * @param int
+     *
+     * @return static self reference
+     */
+    public function trafficSource($value): LeadEstimateQuery
+    {
+        $this->trafficSource = $value;
+
+        return $this;
+    }
+
+
+    /**
      * Sets the [[statusId]] property.
      *
      * @param int
@@ -212,13 +253,15 @@ class LeadEstimateQuery extends ElementQuery
             'estimatorwizard_leadestimates.dateCreated',
             'estimatorwizard_leadestimates.dateUpdated',
             'estimatorwizard_leadestimates.uid',
+            'estimatorwizard_leadestimates.notes',
+            'estimatorwizard_leadestimates.trafficSource',
             'estimatorwizard_leadstatuses.handle as statusHandle'
         ]);
 
-        
-
         $this->query->innerJoin('{{%estimatorwizard_leadstatuses}} estimatorwizard_leadstatuses', '[[estimatorwizard_leadstatuses.id]] = [[estimatorwizard_leadestimates.statusId]]');
         $this->subQuery->innerJoin('{{%estimatorwizard_leadstatuses}} estimatorwizard_leadstatuses', '[[estimatorwizard_leadstatuses.id]] = [[estimatorwizard_leadestimates.statusId]]');
+       
+        //$this->subQuery->innerJoin('{{%estimatorwizard_leadstatuslog}} estimatorwizard_leadstatuslog', '[[estimatorwizard_leadstatuslog.leadId]] = [[estimatorwizard_leadestimates.id]]');
 
         if ($this->id) {
             $this->subQuery->andWhere(Db::parseParam(
@@ -235,6 +278,18 @@ class LeadEstimateQuery extends ElementQuery
         if ($this->statusHandle) {
             $this->subQuery->andWhere(Db::parseParam(
                 'estimatorwizard_leadstatuses.handle', $this->statusHandle)
+            );
+        }
+
+        if ($this->contactZipCode) {
+            $this->subQuery->andWhere(Db::parseParam(
+                'estimatorwizard_leadstatuses.contactZipCode', $this->contactZipCode)
+            );
+        }
+
+        if ($this->contactCustomer) {
+            $this->subQuery->andWhere(Db::parseParam(
+                'estimatorwizard_leadstatuses.contactCustomer', $this->contactCustomer)
             );
         }
 
