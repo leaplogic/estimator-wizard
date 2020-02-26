@@ -24,10 +24,6 @@ use yii\db\StaleObjectException;
  */
 class Leads extends Component
 {
-    /**
-     * @var bool
-     */
-    public $fakeIt = false;
 
     /**
      * @var LeadEstimateRecord
@@ -48,6 +44,12 @@ class Leads extends Component
         parent::__construct($leadEstimateRecord);
     }
 
+
+    public function getLead(): LeadEstimateElement
+    {
+        $lead = new LeadEstimateElement();
+        return $lead;
+    }
 
 
     /**
@@ -207,15 +209,13 @@ class Leads extends Component
      * Returns a lead estimate model if one is found in the database by id
      *
      * @param          $leadId
-     * @param int|null $siteId
      *
      * @return Lead|null
      */
-    public function getLeadById($leadId, int $siteId = null)
+    public function getLeadById($leadId)
     {
         $query = LeadEstimateElement::find();
         $query->id($leadId);
-        $query->siteId($siteId);
 
         // We are using custom statuses, so all are welcome
         $query->status(null);
@@ -269,10 +269,6 @@ class Leads extends Component
 
                 Craft::error('OnBeforeSaveLeadEvent is not valid', __METHOD__);
 
-                if ($event->fakeIt) {
-                    EstimatorWizard::$app->entries->fakeIt = true;
-                }
-
                 return false;
             }
 
@@ -289,6 +285,7 @@ class Leads extends Component
             $transaction->commit();
 
             $this->callOnSaveLeadEvent($lead, $isNewLead);
+
         } catch (\Exception $e) {
             Craft::error('Failed to save element: '.$e->getMessage(), __METHOD__);
             $transaction->rollBack();
@@ -312,6 +309,16 @@ class Leads extends Component
     }
 
 
+    public function getStatusByHandle($handle)
+    {
+        $leadStatus = LeadStatusRecord::find()
+            ->where(['handle' => $handle])
+            ->one();
+
+        return $leadStatus ?? null;
+    }
+
+
 
     /**
      * Gets an Lead Status's record.
@@ -322,7 +329,7 @@ class Leads extends Component
      * @throws Exception
      */
 
-    private function getLeadStatusRecordById($leadStatusId = null)
+    public function getLeadStatusRecordById($leadStatusId = null)
     {
         if ($leadStatusId) {
             $leadStatusRecord = LeadStatusRecord::findOne($leadStatusId);
