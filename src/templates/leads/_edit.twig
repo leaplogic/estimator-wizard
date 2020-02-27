@@ -38,35 +38,20 @@
 {% block details %}
 
     <div class="meta">
-        {% set trafficSource = "<h6>" ~ lead.trafficSource ~ "</h6>" %}
-        {{ forms.field({
-            label: "Traffic Source"|t('estimator-wizard'),
-        }, trafficSource) }}
-       {# {% set pathBasePrice = "<h6>" ~ lead.pathBasePrice ~ "</h6>" %}
+        {% set status = craft.estimatorWizard.getStatusByHandle(lead.status) %}
+        {% if currentUser.admin %}
+            {{ forms.selectField({
+                label: "Lead Status"|t('estimator-wizard'),
+                id: 'statusId',
+                name: 'statusId',
+                value: lead.statusId,
+                options: statuses,
+                errors: lead.getErrors('statusId')
+            }) }}
+        {% else %}
+            <span class="status {{ status.color}}">{{ status.name }}</span>
+        {% endif %}
 
-        {{ forms.field({
-            label: "Path"|t('estimator-wizard'),
-        }, pathName) }}
-
-        {{ forms.field({
-            label: "Base Price"|t('estimator-wizard'),
-        }, pathBasePrice) }}
-
-        {{ forms.lightswitchField({
-            label: "Previous Customer"|t('estimator-wizard'),
-            name: 'contactCustomer',
-            on: lead.contactCustomer,
-            first: false
-        }) }} #}
-
-        {{ forms.selectField({
-            label: "Lead Status"|t('estimator-wizard'),
-            id: 'statusId',
-            name: 'statusId',
-            value: lead.statusId,
-            options: statuses,
-            errors: lead.getErrors('statusId')
-        }) }}
     </div>
     <hr>
     <div class="meta read-only">
@@ -75,6 +60,8 @@
             <div class="value">{{ lead.dateCreated|datetime('short') }}</div>
             <h5 class="heading">{{ "Updated"|t('estimator-wizard') }}</h5>
             <div class="value">{{ lead.dateUpdated|datetime('short') }}</div>
+            <h5 class="heading">{{ "Traffic Source"|t('estimator-wizard') }}</h5>
+            <div class="value">{{ lead.trafficSource == '' ? 'Organic' : lead.trafficSource }}</div>
         </div>
     </div>
 {% endblock %}
@@ -98,22 +85,44 @@
 
         <h2>Lead Contact</h2>
         <p><strong>Name: </strong> {{ lead.contactName }}</p>
-        <p><strong>Email: </strong> {{ lead.contactEmail }}</p>
-        <p><strong>Phone: </strong> {{ lead.contactPhone }}</p>
+        {% if lead.isVisible %}
+            <p><strong>Email: </strong> <a href="mailto:{{ lead.contactEmail }}" target="_blank">{{ lead.contactEmail }}</a></p>
+            <p><strong>Phone: </strong> <a href="tel:{{ lead.contactPhone }}" target="_blank">{{ lead.contactPhone }}</a></p>
+        {% endif %}
         <p><strong>ZipCode: </strong>{{ lead.contactZipCode }} </p>
         <p><strong>Previous Customer: </strong>{{ lead.contactCustomer == 1 ? 'Yes' : 'No' }} </p>
-        <br>
-        <h2>Lead Path:  {{ lead.pathLabel }}</h2>
-        {% for item in lead.steps %}
-            <h4>Step: {{ item.label }}</h4>
-            <p><strong>{{ item.value }}: </strong> {{ item.price.low }}-{{ item.price.high }}</p>
-            <hr>
-        {% endfor %}
-        <h2>ESTIMATED TOTAL</h2>
-        <p>${{ lead.estimateLow }} - ${{ lead.estimateHigh }}</p>
-        <hr>
-        <br>
         
+        <br>
+        <table class="editable fullwidth">
+            <thead>
+                <tr>
+                    <th>Steps for <strong>{{ lead.pathLabel }}</strong></th>
+                    <th>Selected Option</th>
+                    <th>Option Estimate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in lead.steps %}
+                    <tr>
+                        <td style="text-align:left;">{{ item.label }}</td>
+                        <td style="text-align:left;">{{ item.value }}</td>
+                        <td style="text-align:left; letter-spacing:1px;">{{ item.price.low|currency('USD', stripZeros=true) }} - {{ item.price.high|currency('USD', stripZeros=true) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="border-top: 1px solid rgba(51, 64, 77, 0.1);color: #7b8793;font-weight:bold;background-color: #f3f7fc;padding:10px;">
+                        ESTIMATED TOTAL
+                    </td>
+                    <td colspan="1" style="border-top: 1px solid rgba(51, 64, 77, 0.1);color: #7b8793;font-weight: normal;background-color: #f3f7fc;padding:10px;letter-spacing:1px;">
+                        <strong>{{ lead.estimateLow|currency('USD', stripZeros=true) }}</strong> - <strong>{{ lead.estimateHigh|currency('USD', stripZeros=true) }}</strong>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+        <hr> 
+
         {{ forms.textareaField({
             label: 'Notes',
             instructions: '',
@@ -122,26 +131,26 @@
             rows: 10,
             value: lead.notes })
         }}
-
         <hr>
-        <br>
 
         <h2>Status Change Log</h2>
         {% set logs = craft.estimatorWizard.leadLog(lead.id) %}
-        <table>
+        <table class="editable fullwidth">
             <thead>
-                <td>Status</td>
-                <td>User</td>
-                <td>Date</td>
+                <tr>
+                <th>Status</th>
+                <th>User</th>
+                <th>Date</th>
+                </tr>
             </thead>
             <tbody>
             {% for item in logs %}
                 <tr>
                     {% set user = craft.users().id(item.authorId).one() %}
                     {% set status = craft.estimatorWizard.getStatusByHandle(item.status) %}
-                    <td><span class="status {{ status.color }}"></span> {{ status.name }}</td>
-                    <td>{{ user.firstName }} {{ user.lastName }}</td>
-                    <td>{{ item.dateCreated|datetime('short') }}</td>
+                    <td style="text-align:left;"><span class="status {{ status.color }}"></span> {{ status.name }}</td>
+                    <td style="text-align:left;">{{ user.firstName }} {{ user.lastName }}</td>
+                    <td style="text-align:left;">{{ item.dateCreated|datetime('short') }}</td>
                 </tr>
             {% endfor %}
             </tbody>

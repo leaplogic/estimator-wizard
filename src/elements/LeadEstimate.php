@@ -89,6 +89,7 @@ class LeadEstimate extends Element
     public $contactCustomer;
     public $statusId;
     public $statusHandle;
+    public $statusColor;
     public $trafficSource;
     public $notes;
 
@@ -194,14 +195,6 @@ class LeadEstimate extends Element
         }
 
         return $statusArray;
-       /* return [
-            // 'unverified' => ['label' => \Craft::t('estimator-wizard', 'Unverified'), 'color' => '333333'],
-            // 'qualified' => ['label' => \Craft::t('estimator-wizard', 'Qualified'), 'color' => 'A8E26E'],
-            // 'qalified-out-of-area' => ['label' => \Craft::t('estimator-wizard', 'Qualified (Out of Area)'), 'color' => 'cb7624'],
-            // 'unqualified-phone' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Phone)'), 'color' => 'a5272a'],
-            // 'unqualified-email' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Email)'), 'color' => 'a5272a'],
-            // 'unqualified-spam' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Spam)'), 'color' => 'a5272a'],
-        ];*/
     }
 
     /**
@@ -211,7 +204,7 @@ class LeadEstimate extends Element
     public function getStatus():string
     {
         $statusId = $this->statusId;
-        
+
         return EstimatorWizard::$app->leads->getLeadStatusById($statusId)->handle;
     }
 
@@ -289,7 +282,17 @@ class LeadEstimate extends Element
         return intval($pathPrice['high']) + intval(array_sum($prices));
     }
 
+    public function isVisible(): bool
+    {
+        $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
+        $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
 
+        if($nonWhiteListStatus->handle === $this->status) {
+            return false;
+        }
+
+        return true;
+    }
 
     // Indexes, etc.
     // -------------------------------------------------------------------------
