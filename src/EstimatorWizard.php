@@ -249,6 +249,9 @@ class EstimatorWizard extends Plugin
                     ]
                 ]
             ],
+            'estimatorWizard-deleteLead' => [
+                'label' => Craft::t('estimator-wizard', 'Delete Lead')
+            ]
         ];
     }
     

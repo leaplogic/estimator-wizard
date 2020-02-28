@@ -12,6 +12,7 @@ use leaplogic\estimatorwizard\models\LeadStatus;
 use leaplogic\estimatorwizard\records\LeadEstimate as LeadEstimateRecord;
 use leaplogic\estimatorwizard\records\LeadStatus as LeadStatusRecord;
 use craft\base\Element;
+use leaplogic\estimatorwizard\models\LeadEstimate;
 use Throwable;
 use yii\base\Component;
 use yii\base\Exception;
@@ -161,6 +162,67 @@ class Leads extends Component
         return false;
     }
 
+
+
+    /**
+     * Removes a lead and related records from the database
+     *
+     * @param LeadElement $lead
+     *
+     * @return bool
+     * @throws \Exception
+     * @throws Throwable
+     */
+    public function deleteLead(LeadEstimate $lead): bool
+    {
+        $transaction = Craft::$app->db->beginTransaction();
+
+        try {
+            // Delete the Element and Lead
+            $success = Craft::$app->elements->deleteElementById($lead->id);
+
+            if (!$success) {
+                $transaction->rollBack();
+                Craft::error('Couldn’t delete Lead', __METHOD__);
+
+                return false;
+            }
+
+            $transaction->commit();
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+
+            throw $e;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Removes leads and related records from the database given the ids
+     *
+     * @param $leadElements
+     *
+     * @return bool
+     * @throws \Exception
+     * @throws Throwable
+     */
+    public function deleteLeads($leadElements): bool
+    {
+        foreach ($leadElements as $key => $leadElement) {
+            $lead = EstimatorWizard::$app->leads->getLeadById($leadElement->id);
+
+            if ($lead) {
+                EstimatorWizard::$app->leads->deleteLead($lead);
+            } else {
+                Craft::error("Can't delete the lead with id: {$leadElement->id}", __METHOD__);
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Reorders Lead Statuses
      *
@@ -208,9 +270,9 @@ class Leads extends Component
     /**
      * Returns a lead estimate model if one is found in the database by id
      *
-     * @param          $leadId
+     * @param $leadId
      *
-     * @return Lead|null
+     * @return LeadEstimate|null
      */
     public function getLeadById($leadId)
     {

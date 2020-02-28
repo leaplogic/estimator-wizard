@@ -216,15 +216,13 @@ class LeadEstimateController extends Controller
             $leadStatuses[$nonWhiteListStatus->id] = $nonWhiteListStatus->name;
         }
 
-
-        $variables['leadId'] = $leadId;
-        $variables['leadStatus'] = $leadStatus;
-        $variables['statuses'] = $leadStatuses;
-
-        // This is our element, so we know where to get the field values
-        $variables['lead'] = $lead;
-
-        return $this->renderTemplate('estimator-wizard/leads/_edit', $variables);
+        return $this->renderTemplate('estimator-wizard/leads/_edit', [
+            'leadId' => $leadId,
+            'leadStatus' => $leadStatus,
+            'statuses' => $leadStatuses,
+            'lead'=> $lead,
+            'continueEditingUrl' => 'estimator-wizard/lead-estimates/edit/{id}'
+        ]);
     }
 
     /**
@@ -234,8 +232,9 @@ class LeadEstimateController extends Controller
      */
     public function actionDeleteLead(): Response
     {
+        $this->requirePermission('estimatorWizard-deleteLead');
+        
         $this->requirePostRequest();
-        //$this->requirePermission('estimatorWizard-editLeads');
 
         $request = Craft::$app->getRequest();
 

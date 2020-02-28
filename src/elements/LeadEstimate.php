@@ -73,11 +73,6 @@ class LeadEstimate extends Element
     // Public Properties
     // =========================================================================
 
-    /**
-     * Path
-     *
-     * @var string
-     */
     public $id;
     public $pathLabel;
     public $pathBasePrice;
@@ -106,6 +101,9 @@ class LeadEstimate extends Element
         return Craft::t('estimator-wizard', 'Lead Estimate');
     }
 
+    /**
+     * @inheritdoc
+     */
     public static function pluralDisplayName(): string
     {
         return Craft::t('estimator-wizard', 'Lead Estimates');
@@ -156,6 +154,9 @@ class LeadEstimate extends Element
         return true;
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineSources(string $context = null): array
     {
 
@@ -181,6 +182,9 @@ class LeadEstimate extends Element
         );
     }
 
+    /**
+     * @inheritdoc
+     */
     public static function statuses(): array
     {
         $statuses = EstimatorWizard::$app->leads->getAllLeadStatuses();
@@ -247,17 +251,32 @@ class LeadEstimate extends Element
         return true;
     }
 
+    /**
+     * Returns the pathBasePrice as an array [low],[high]
+     * 
+     * @return array
+     */
     public function pathPrice(): array 
     {   
         $price = $this->pathBasePrice;
         return json_decode($price, true); 
     }
 
+    /**
+     * Returns the steps as an array converted from a JSON text string.
+     * 
+     * @return array
+     */
     public function steps(): array
     {
         return json_decode($this->results, true);
     }
 
+    /**
+     * Returns the Low Estimate Total of all steps and base path price.
+     * 
+     * @return string
+     */
     public function estimateLow(): string
     {
         $pathPrice = json_decode($this->pathBasePrice, true);
@@ -270,6 +289,11 @@ class LeadEstimate extends Element
         return intval($pathPrice['low']) + intval(array_sum($prices));
     }
 
+    /**
+     * Returns the High Estimate Total of all steps and base path price.
+     * 
+     * @return string
+     */
     public function estimateHigh(): string
     {
         $pathPrice = json_decode($this->pathBasePrice, true);
@@ -282,6 +306,11 @@ class LeadEstimate extends Element
         return intval($pathPrice['high']) + intval(array_sum($prices));
     }
 
+    /**
+     * Returns boolean if current element status is equal to settings Non-WhiteListStatus selection.
+     * 
+     * @return bool
+     */
     public function isVisible(): bool
     {
         $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
@@ -322,17 +351,6 @@ class LeadEstimate extends Element
         return $html;
     }
 
-    // protected static function defineSortOptions(): array
-    // {
-    //     $attributes = [
-    //         'estimatorwizard_leads.dateCreated' => Craft::t('estimator-wizard', 'Date Created'),
-    //         'estimatorwizard_leads.dateUpdated' => Craft::t('estimator-wizard', 'Date Updated'),
-    //     ];
-
-    //     return $attributes;
-    // }
-
-
     /**
      * @inheritdoc
      */
@@ -348,17 +366,25 @@ class LeadEstimate extends Element
         return $attributes;
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineSearchableAttributes(): array
     {
         return ['pathLabel', 'contactName'];
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineDefaultTableAttributes(string $source): array
     {
         return ['contactName', 'pathLabel', 'statusId', 'dateCreated', 'dateUpdated'];
     }
 
-
+    /**
+     * @inheritdoc
+     */
     public function getContentTable(): string
     {
         return "{{%estimatorwizard_leadestimates}}";
@@ -379,10 +405,10 @@ class LeadEstimate extends Element
     public function beforeSave(bool $isNew): bool
     {
         // Save previous status to status log
-        if (!$isNew) {
-            $currentUser = Craft::$app->getUser()->getIdentity()->getId();
-            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
-        }
+        // if (!$isNew) {
+        //     $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+        //     EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
+        // }
         return true;
     }
 
@@ -398,6 +424,12 @@ class LeadEstimate extends Element
         // Get the lead estimate record
         if (!$isNew) {
             $record = LeadEstimateRecord::findOne($this->id);
+
+            // Save previous status to status log
+            if($record->statusId != $this->statusId) {
+                $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+                EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
+            }
 
             if (!$record) {
                 throw new Exception('Invalid Lead ID: '.$this->id);
