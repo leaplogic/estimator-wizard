@@ -159,10 +159,6 @@ class LeadEstimateController extends Controller
                 'success' => true
             ]);
         }
-        // // expecting to be json unless otherwise determined.
-        // return $this->asJson([
-        //     'success' => true
-        // ]);
 
         Craft::$app->getSession()->setNotice(Craft::t('estimator-wizard', 'Lead Estimate saved.'));
 
@@ -184,7 +180,7 @@ class LeadEstimateController extends Controller
      */
     public function actionEditLead(int $leadId = null, LeadEstimateElement $lead = null): Response
     {
-        //$this->requirePermission('estimatorWizard-editLeads');
+        $this->requirePermission('estimatorWizard-editLead');
 
         if ($lead === null) {
             $lead = EstimatorWizard::$app->leads->getLeadById($leadId);
@@ -196,13 +192,30 @@ class LeadEstimateController extends Controller
 
         Craft::$app->getContent()->populateElementContent($lead);
 
+
+        // IF Admin (return full list of statuses) ELSE (only default status & Non-Whitelist Initial Status from settings).
         $leadStatus = EstimatorWizard::$app->leads->getLeadStatusById($lead->statusId);
         $statuses = EstimatorWizard::$app->leads->getAllLeadStatuses();
-        $leadStatuses = [];
+        $defaultStatusId = EstimatorWizard::$app->leads->getDefaultLeadStatusId();
 
-        foreach ($statuses as $key => $status) {
-            $leadStatuses[$status->id] = $status->name;
+        $leadStatuses = [];
+        //$this->requirePermission('estimatorWizard-editStatuses')
+        //$this->requirePermission('admin')
+        
+        if(Craft::$app->getUser()->checkPermission('estimatorWizard-editLeadStatus')) {
+            foreach ($statuses as $key => $status) {
+                $leadStatuses[$status->id] = $status->name;
+            }
         }
+        else if(Craft::$app->getUser()->checkPermission('estimatorWizard-editLeadPartialStatus')) {
+
+            $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
+            $defaultStatus = EstimatorWizard::$app->leads->getLeadStatusById($defaultStatusId);
+            $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
+            $leadStatuses[$defaultStatusId] = $defaultStatus->name;
+            $leadStatuses[$nonWhiteListStatus->id] = $nonWhiteListStatus->name;
+        }
+
 
         $variables['leadId'] = $leadId;
         $variables['leadStatus'] = $leadStatus;

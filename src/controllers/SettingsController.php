@@ -21,6 +21,8 @@ class SettingsController extends BaseController
 {
     public function actionIndex()
     {
+        $this->requirePermission('admin');
+
         $plugin = Craft::$app->getPlugins()->getPlugin('estimator-wizard');
 
         return $this->renderTemplate('estimator-wizard/settings/general', [

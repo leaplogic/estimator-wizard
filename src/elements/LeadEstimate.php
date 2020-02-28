@@ -378,6 +378,7 @@ class LeadEstimate extends Element
      */
     public function beforeSave(bool $isNew): bool
     {
+        // Save previous status to status log
         if (!$isNew) {
             $currentUser = Craft::$app->getUser()->getIdentity()->getId();
             EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
@@ -419,6 +420,13 @@ class LeadEstimate extends Element
         $record->notes = $this->notes;
 
         $record->save(false);
+
+        // Save initial status to status log
+        if ($isNew) {
+            $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+            $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
+            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $currentUser);
+        }
 
         parent::afterSave($isNew);
     }

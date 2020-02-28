@@ -38,19 +38,16 @@
 {% block details %}
 
     <div class="meta">
-        {% set status = craft.estimatorWizard.getStatusByHandle(lead.status) %}
-        {% if currentUser.admin %}
-            {{ forms.selectField({
-                label: "Lead Status"|t('estimator-wizard'),
-                id: 'statusId',
-                name: 'statusId',
-                value: lead.statusId,
-                options: statuses,
-                errors: lead.getErrors('statusId')
-            }) }}
-        {% else %}
-            <span class="status {{ status.color}}">{{ status.name }}</span>
-        {% endif %}
+        {# {% set status = craft.estimatorWizard.getStatusByHandle(lead.status) %} #}
+        
+        {{ forms.selectField({
+            label: "Lead Status"|t('estimator-wizard'),
+            id: 'statusId',
+            name: 'statusId',
+            value: lead.statusId,
+            options: statuses,
+            errors: lead.getErrors('statusId')
+        }) }}
 
     </div>
     <hr>

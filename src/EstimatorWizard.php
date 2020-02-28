@@ -14,18 +14,19 @@ use leaplogic\estimatorwizard\services\App;
 use leaplogic\estimatorwizard\models\Settings as SettingsModel;
 use leaplogic\estimatorwizard\elements\LeadEstimate;
 use leaplogic\estimatorwizard\web\twig\variables\EstimatorWizardVariables;
-use leaplogic\estimatorwizard\events\OnSaveLeadEvent;
+use leaplogic\estimatorwizard\integrations\sproutemail\events\notificationevents\LeadEstimateSaveEvent;
+use barrelstrength\sproutbaseemail\services\NotificationEmailEvents;
+use barrelstrength\sproutbaseemail\events\NotificationEmailEvent;
 
 use Craft;
 use craft\base\Plugin;
-use craft\services\Plugins;
-use craft\events\PluginEvent;
-use craft\console\Application as ConsoleApplication;
 use craft\web\UrlManager;
 use craft\helpers\UrlHelper;
 use craft\services\Elements;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\events\RegisterUserPermissionsEvent;
+use craft\services\UserPermissions;
 use craft\web\twig\variables\CraftVariable;
 
 use yii\base\Event;
@@ -110,6 +111,10 @@ class EstimatorWizard extends Plugin
             }
         );
 
+        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
+            $event->permissions['Estimator Wizard'] = $this->getUserPermissions();
+        });
+
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, static function(Event $event) {
             $event->sender->set('estimatorWizard', EstimatorWizardVariables::class);
         });
@@ -122,6 +127,10 @@ class EstimatorWizard extends Plugin
                 $event->types[] = LeadEstimate::class;
             }
         );
+
+        Event::on(NotificationEmailEvents::class, NotificationEmailEvents::EVENT_REGISTER_EMAIL_EVENT_TYPES, static function(NotificationEmailEvent $event) {
+            $event->events[] = LeadEstimateSaveEvent::class;
+        });
 
         $this->setComponents([
             'leads' => \leaplogic\estimatorwizard\services\Leads::class,
@@ -220,6 +229,27 @@ class EstimatorWizard extends Plugin
                 'settings' => $this->getSettings()
             ]
         );
+    }
+
+     /**
+     * @return array
+     */
+    public function getUserPermissions(): array
+    {
+        return [
+            'estimatorWizard-editLead' => [
+                'label' => Craft::t('estimator-wizard', 'Edit Lead'),
+            
+                'nested' => [
+                    'estimatorWizard-editLeadPartialStatus' => [
+                        'label' => Craft::t('estimator-wizard', 'Edit Lead Partial Status')
+                    ],
+                    'estimatorWizard-editLeadStatus' => [
+                        'label' => Craft::t('estimator-wizard', 'Edit Lead Status')
+                    ]
+                ]
+            ],
+        ];
     }
     
 }
