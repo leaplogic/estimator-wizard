@@ -48,7 +48,6 @@ class Settings extends Model
      */
     public $emailTemplatePath;
 
-    public $emailInternalTemplatePath;
 
     /**
      * Zipcodes
