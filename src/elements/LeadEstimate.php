@@ -224,7 +224,11 @@ class LeadEstimate extends Element
 
     // Public Methods
     // =========================================================================
-
+    public function init()
+    {
+        parent::init();
+        $this->setScenario(self::SCENARIO_LIVE);
+    }
     /**
      * Returns the validation rules for attributes.
      *
@@ -237,7 +241,10 @@ class LeadEstimate extends Element
      */
     public function rules()
     {
-        $rules = parent::rules();
+        $rules = parent::defineRules();
+
+        $rules[] = [['contactEmail','pathLabel','statusId'], 'required'];
+
         return $rules;
     }
 

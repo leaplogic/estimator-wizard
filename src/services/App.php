@@ -11,10 +11,12 @@ class App extends Component
      * @var Leads
      */
     public $leads;
+    public $emails;
     public $settings;
 
     public function init()
     {
         $this->leads = new Leads();
+        $this->emails = new Emails();
     }
 }

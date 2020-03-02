@@ -5,7 +5,9 @@ namespace leaplogic\estimatorwizard\integrations\sproutemail\events\notification
 use barrelstrength\sproutbaseemail\base\NotificationEvent;
 use leaplogic\estimatorwizard\elements\LeadEstimate;
 use leaplogic\estimatorwizard\services\Leads;
+use leaplogic\estimatorwizard\events\OnSaveLeadEstimateEvent;
 use Craft;
+use craft\base\Element;
 use craft\base\ElementInterface;
 use craft\events\ElementEvent;
 use craft\events\ModelEvent;
@@ -23,13 +25,11 @@ use Twig\Error\SyntaxError;
  * @property string                            $description
  * @property string                            $eventClassName
  */
-class LeadEstimateSaveEvent extends NotificationEvent
+class SaveLeadEstimateEvent extends NotificationEvent
 {
     public $whenNew;
 
     public $whenUpdated;
-
-    //public $viewContext = 'sprout-forms';
 
     /**
      * @inheritdoc
@@ -52,7 +52,7 @@ class LeadEstimateSaveEvent extends NotificationEvent
      */
     public function getEventHandlerClassName()
     {
-        return ModelEvent::class;
+        return OnSaveLeadEstimateEvent::class;
     }
 
     /**
@@ -89,10 +89,12 @@ class LeadEstimateSaveEvent extends NotificationEvent
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getEventObject()
     {
         $event = $this->event ?? null;
-
         return $event->lead ?? null;
     }
 
@@ -103,7 +105,16 @@ class LeadEstimateSaveEvent extends NotificationEvent
     {
         $criteria = LeadEstimate::find();
         $criteria->orderBy(['id' => SORT_DESC]);
-        return $criteria->one();
+        $lead = $criteria->one();
+
+        if($lead) {
+            return $lead;
+        }
+
+        Craft::warning('estimator-wizard', 'Unable to generate a mock Lead Entry. Make sure you have at least one Lead Estimated submitted in your database.');
+
+        return null;
+ 
     }
 
     /**
@@ -125,7 +136,7 @@ class LeadEstimateSaveEvent extends NotificationEvent
         ];
         $rules[] = [['whenNew', 'whenUpdated'], 'validateWhenTriggers'];
         $rules[] = [['event'], 'validateEvent'];
-
+           
         return $rules;
     }
 
@@ -135,8 +146,7 @@ class LeadEstimateSaveEvent extends NotificationEvent
          * @var ElementEvent $event
          */
         $event = $this->event ?? null;
-
-        $isNewLead = $event->isNew ?? false;
+        $isNewLead = $event->isNewLead ?? false;
 
         $matchesWhenNew = $this->whenNew && $isNewLead ?? false;
         $matchesWhenUpdated = $this->whenUpdated && !$isNewLead ?? false;
@@ -158,15 +168,23 @@ class LeadEstimateSaveEvent extends NotificationEvent
 
     public function validateEvent()
     {
+        //return true;
         $event = $this->event ?? null;
 
-        // if (!$event) {
-        //     $this->addError('event', Craft::t('estimator-wizard', 'ElementEvent does not exist.'));
-        // }
+        // Only trigger this event when an Lead is Live.
+        // When an Lead Type is updated, SCENARIO_ESSENTIALS
+        // When status is disabled, SCENARIO_DEFAULT
+        if ($event->lead->getScenario() !== Element::SCENARIO_LIVE) {
+            $this->addError('event', Craft::t('estimator-wizard', 'The `LeadEstimateSave` Notification Event only triggers when an Lead is saved in a live scenario.'));
+        }
 
-        // if (get_class($event->sender) !== LeadEstimate::class) {
-        //     $this->addError('event', Craft::t('estimator-wizard', 'The `LeadEstimateSaveNotification` Notification Event does not match the leaplogic\esitimatorwizard\element\LeadEstimate class.'));
-        // }
+        if (!$event) {
+            $this->addError('event', Craft::t('estimator-wizard', 'ElementEvent does not exist.'));
+        }
+
+        if (get_class($event->lead) !== LeadEstimate::class) {
+            $this->addError('event', Craft::t('estimator-wizard', 'The `LeadEstimateSaveNotification` Notification Event does not match the leaplogic\esitimatorwizard\element\LeadEstimate class.'));
+        }
     }
 
 }

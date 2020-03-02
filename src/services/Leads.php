@@ -7,7 +7,7 @@ use Craft;
 use leaplogic\estimatorwizard\EstimatorWizard;
 use leaplogic\estimatorwizard\elements\LeadEstimate as LeadEstimateElement;
 use leaplogic\estimatorwizard\events\OnBeforeSaveLeadEvent;
-use leaplogic\estimatorwizard\events\OnSaveLeadEvent;
+use leaplogic\estimatorwizard\events\OnSaveLeadEstimateEvent;
 use leaplogic\estimatorwizard\models\LeadStatus;
 use leaplogic\estimatorwizard\records\LeadEstimate as LeadEstimateRecord;
 use leaplogic\estimatorwizard\records\LeadStatus as LeadStatusRecord;
@@ -346,7 +346,7 @@ class Leads extends Component
 
             $transaction->commit();
 
-            $this->callOnSaveLeadEvent($lead, $isNewLead);
+            $this->callOnSaveLeadEstimateEvent($lead, $isNewLead);
 
         } catch (\Exception $e) {
             Craft::error('Failed to save element: '.$e->getMessage(), __METHOD__);
@@ -411,9 +411,9 @@ class Leads extends Component
      * @param $lead
      * @param $isNewLead
      */
-    public function callOnSaveLeadEvent($lead, $isNewLead)
+    public function callOnSaveLeadEstimateEvent($lead, $isNewLead)
     {
-        $event = new OnSaveLeadEvent([
+        $event = new OnSaveLeadEstimateEvent([
             'lead' => $lead,
             'isNewLead' => $isNewLead,
         ]);

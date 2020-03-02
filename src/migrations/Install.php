@@ -176,8 +176,12 @@ class Install extends Migration
     {
 
         $this->addForeignKey(
-            $this->db->getForeignKeyName('{{%estimatorwizard_leadestimates}}', 'id'),
-            '{{%estimatorwizard_leadestimates}}', 'id', '{{%elements}}', 'id', 'CASCADE', null);
+            $this->db->getForeignKeyName(
+                '{{%estimatorwizard_leadestimates}}', 'id'
+            ),
+            '{{%estimatorwizard_leadestimates}}', 'id', 
+            '{{%elements}}', 'id', 'CASCADE'
+        );
 
         // estimatorwizard_leadstatuslog table
         $this->addForeignKey(
@@ -200,45 +204,38 @@ class Install extends Migration
         // populate default Lead Statuses
         $defaultLeadStatuses = [
             0 => [
-                'name' => 'Unverified',
-                'handle' => 'unverified',
-                'color' => 'blue',
+                'name' => 'Qualified',
+                'handle' => 'qualified',
+                'color' => 'green',
                 'sortOrder' => 1,
                 'isDefault' => 1
             ],
             1 => [
-                'name' => 'Qualified',
-                'handle' => 'qualified',
-                'color' => 'green',
+                'name' => 'Qualified (Out of Area)',
+                'handle' => 'qualified-out-of-area',
+                'color' => 'orange',
                 'sortOrder' => 2,
                 'isDefault' => 0
             ],
             2 => [
-                'name' => 'Qualified (Out of Area)',
-                'handle' => 'qualified-out-of-area',
-                'color' => 'orange',
+                'name' => 'Unqualified (Phone)',
+                'handle' => 'unqualified-phone',
+                'color' => 'red',
                 'sortOrder' => 3,
                 'isDefault' => 0
             ],
             3 => [
-                'name' => 'Unqualified (Phone)',
-                'handle' => 'unqualified-phone',
+                'name' => 'Unqualified (Email)',
+                'handle' => 'unqualified-email',
                 'color' => 'red',
                 'sortOrder' => 4,
                 'isDefault' => 0
             ],
-            4 => [
-                'name' => 'Unqualified (Email)',
-                'handle' => 'unqualified-email',
-                'color' => 'red',
-                'sortOrder' => 5,
-                'isDefault' => 0
-            ],
-            5 => [
+           4 => [
                 'name' => 'Unqualified (Spam)',
                 'handle' => 'unqualified-spam',
                 'color' => 'red',
-                'sortOrder' => 6,
+                'sortOrder' => 5,
                 'isDefault' => 0
             ]
         ];

@@ -39,6 +39,8 @@
     <input type="hidden" name="action" value="{{ actionUrl }}" />
     <input type="hidden" name="redirect" value="{{ 'estimator-wizard/settings/general'|hash }}">
 
+    <h3>Email Settings</h3>
+
     {{ forms.textField({
         label: 'Email Leads To',
         instructions: 'Comma separated list of email addresses.',
@@ -46,9 +48,31 @@
         name: 'settings[emailTo]',
         value: settings['emailTo']})
     }}
+    
 
     {{ forms.textField({
-        label: 'Zip Code Witelist',
+        label: 'Email Template Path',
+        instructions: 'Custom email template path for lead estimate.',
+        id: 'emailTemplatePath',
+        name: 'settings[emailTemplatePath]',
+        value: settings['emailTemplatePath']})
+    }}
+
+
+    {{ forms.textField({
+        label: 'Email Template Path',
+        instructions: 'Custom email template path for internal submission.',
+        id: 'emailInternalTemplatePath',
+        name: 'settings[emailInternalTemplatePath]',
+        value: settings['emailInternalTemplatePath']})
+    }}
+
+    <hr>
+
+    <h3>Zip Code Validation Settings</h3>
+
+    {{ forms.textField({
+        label: 'Zip Code Whitelist',
         instructions: 'Comma separated list of zip codes for lead contact validation.',
         id: 'zipCodes',
         name: 'settings[zipCodes]',

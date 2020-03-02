@@ -42,6 +42,15 @@ class Settings extends Model
     public $emailTo;
 
     /**
+     * Email Template Path
+     *
+     * @var string
+     */
+    public $emailTemplatePath;
+
+    public $emailInternalTemplatePath;
+
+    /**
      * Zipcodes
      *
      * @var string

@@ -2,13 +2,13 @@
 
 namespace leaplogic\estimatorwizard\events;
 
-use leaplogic\estimatorwizard\elements\LeadEstimate;
+use leaplogic\estimatorwizard\elements\LeadEstimate as Lead;
 use yii\base\Event;
 
 /**
- * OnSaveLeadEvent class.
+ * OnSaveLeadEstimateEvent class.
  */
-class OnSaveLeadEvent extends Event
+class OnSaveLeadEstimateEvent extends Event
 {
     // Properties
     // =========================================================================

@@ -13,8 +13,10 @@ namespace leaplogic\estimatorwizard;
 use leaplogic\estimatorwizard\services\App;
 use leaplogic\estimatorwizard\models\Settings as SettingsModel;
 use leaplogic\estimatorwizard\elements\LeadEstimate;
+use leaplogic\estimatorwizard\events\OnSaveLeadEstimateEvent;
 use leaplogic\estimatorwizard\web\twig\variables\EstimatorWizardVariables;
-use leaplogic\estimatorwizard\integrations\sproutemail\events\notificationevents\LeadEstimateSaveEvent;
+use leaplogic\estimatorwizard\services\Leads;
+use leaplogic\estimatorwizard\integrations\sproutemail\events\notificationevents\SaveLeadEstimateEvent;
 use barrelstrength\sproutbaseemail\services\NotificationEmailEvents;
 use barrelstrength\sproutbaseemail\events\NotificationEmailEvent;
 
@@ -28,7 +30,6 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\services\UserPermissions;
 use craft\web\twig\variables\CraftVariable;
-
 use yii\base\Event;
 
 /**
@@ -93,6 +94,8 @@ class EstimatorWizard extends Plugin
         self::$app = $this->get('app');
 
         Craft::setAlias('@estimatorwizard', $this->basePath);
+        Craft::setAlias('@estimatorwizardemailtemplatepath', $this->getSettings()->emailTemplatePath);
+        Craft::setAlias('@estimatorwizardemailto', $this->getSettings()->emailTo);
 
 
         // Register our site routes
@@ -107,9 +110,12 @@ class EstimatorWizard extends Plugin
                 $event->rules['estimator-wizard/settings/lead-statuses'] = 'estimator-wizard/lead-statuses/index';
                 $event->rules['estimator-wizard/settings/lead-statuses/new'] = "estimator-wizard/lead-statuses/edit";
                 $event->rules['estimator-wizard/settings/lead-statuses/<leadStatusId:\d+>'] = 'estimator-wizard/lead-statuses/edit';
-
             }
         );
+
+        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_SITE_URL_RULES, function(RegisterUrlRulesEvent $event) {
+            $event->rules['estimator-wizard/lead-estimate-email/<uid:{uid}>-<leadId:\d+>'] = "estimator-wizard/lead-estimate/lead-estimate-email";
+        });
 
         Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function(RegisterUserPermissionsEvent $event) {
             $event->permissions['Estimator Wizard'] = $this->getUserPermissions();
@@ -128,14 +134,20 @@ class EstimatorWizard extends Plugin
             }
         );
 
-        Event::on(NotificationEmailEvents::class, NotificationEmailEvents::EVENT_REGISTER_EMAIL_EVENT_TYPES, static function(NotificationEmailEvent $event) {
-            $event->events[] = LeadEstimateSaveEvent::class;
+        // Event::on(Leads::class, LeadEstimate::EVENT_AFTER_SAVE, static function(OnSaveLeadEstimateEvent $event) {
+        //     //Craft::dump($event);
+        //     //EstimatorWizard::$app->emails->sendLeadEstimateEmail($event);
+        // });
+
+        Event::on(NotificationEmailEvents::class, NotificationEmailEvents::EVENT_REGISTER_EMAIL_EVENT_TYPES, function(NotificationEmailEvent $event) {
+            $event->events[] = SaveLeadEstimateEvent::class;
         });
 
         $this->setComponents([
             'leads' => \leaplogic\estimatorwizard\services\Leads::class,
             'settings' => \leaplogic\estimatorwizard\services\Settings::class,
             'log' => \leaplogic\estimatorwizard\services\Log::class,
+            'email' => \leaplogic\estimatorwizard\services\Emails::class,
         ]);
 
 

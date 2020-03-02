@@ -54,9 +54,9 @@ class LeadEstimateController extends Controller
     /**
      * @var    bool|array Allows anonymous access to this controller's actions.
      *         The actions must be in 'kebab-case'
-     * @access protected
+     * @accesspublic
      */
-    protected $allowAnonymous = ['action-save-lead-estimate', 'view-lead-email'];
+    public $allowAnonymous = ['save-lead-estimate', 'lead-estimate-email'];
 
     // Public Methods
     // =========================================================================
@@ -78,10 +78,41 @@ class LeadEstimateController extends Controller
 
         $variables = [
             'settings' => $settings,
-
         ];
 
         return $this->renderTemplate('estimator-wizard/leads/', $variables);
+    }
+
+    /**
+     * Handle a request going to our plugin's leads email view action URL,
+     * e.g.: actions/estimator-wizard/lead-estimate/view-lead-email
+     *
+     * @return mixed
+     */
+
+    public function actionLeadEstimateEmail(string $uid = null, int $leadId = null) 
+    {
+        /** @var SproutForms $plugin */
+        $plugin = Craft::$app->plugins->getPlugin('estimator-wizard');
+
+        /** @var Settings $settings */
+        $settings = $plugin->getSettings();
+
+        $lead = null;
+        if ($leadId != null) {
+            $lead = EstimatorWizard::$app->leads->getLeadById($leadId);
+        }
+
+        $variables = [
+            'settings' => $settings,
+            'object' => $lead
+        ];
+
+        // index.twig/html used within path
+        // sprout likes to use email.twig/html ¯\_(ツ)_/¯
+        $templatePath = $settings->emailTemplatePath != null ? $settings->emailTemplatePath : 'estimator-wizard/_emails/';
+
+        return $this->renderTemplate($templatePath, $variables);
     }
 
 
@@ -147,7 +178,7 @@ class LeadEstimateController extends Controller
     {
         $success = true;
 
-        // Save Data and Trigger the onSaveLeadEvent
+        // Save Data and Trigger the onSaveLeadEstimateEvent
         $success = EstimatorWizard::$app->leads->saveLead($lead);
 
         if (!$success) {
@@ -233,7 +264,7 @@ class LeadEstimateController extends Controller
     public function actionDeleteLead(): Response
     {
         $this->requirePermission('estimatorWizard-deleteLead');
-        
+
         $this->requirePostRequest();
 
         $request = Craft::$app->getRequest();
