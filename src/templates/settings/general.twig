@@ -1,0 +1,82 @@
+{% requirePermission("admin") %}
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title  = "Settings"|t('estimator-wizard') %}
+{% set actionUrl = 'estimator-wizard/settings/save-settings' %}
+{% set settings = settings ?? plugin.getSettings() %}
+
+{% set fullPageForm = true %}
+
+{% block head %}
+    {{ parent() }}
+{% endblock %}
+
+
+{% set crumbs = [
+    { label: "Settings"|t('estimator-wizard'), url: url('estimator-wizard/settings/general') }
+] %}
+
+{% set selectedSidebarItem = craft.app.request.getSegment(3) %}
+
+{% set sidebar %}
+
+    <nav class="last">
+        <ul>
+            <li><a href="{{ cpUrl('estimator-wizard/settings/index') }}"
+                    {% if selectedSidebarItem == 'general' %}class="sel"{% endif %}>{{ "General"|t('estimator-wizard') }}</a>
+            </li>
+
+            <li><a href="{{ url('estimator-wizard/settings/lead-statuses') }}"
+                    {% if selectedSidebarItem == 'leadstatuses' %}class="sel"{% endif %}>{{ "Lead Statuses"|t('estimator-wizard') }}</a>
+            </li>
+        </ul>
+    </nav>
+
+{% endset %}
+
+{% set content %}
+    <input type="hidden" name="action" value="{{ actionUrl }}" />
+    <input type="hidden" name="redirect" value="{{ 'estimator-wizard/settings/general'|hash }}">
+
+    <h3>Email Settings</h3>
+
+    {{ forms.textField({
+        label: 'Email Leads To',
+        instructions: 'Comma separated list of email addresses.',
+        id: 'emailTo',
+        name: 'settings[emailTo]',
+        value: settings['emailTo']})
+    }}
+    
+
+    {{ forms.textField({
+        label: 'Email Template Path',
+        instructions: 'Custom email template path for lead estimate.',
+        id: 'emailTemplatePath',
+        name: 'settings[emailTemplatePath]',
+        value: settings['emailTemplatePath']})
+    }}
+
+
+    <hr>
+
+    <h3>Zip Code Validation Settings</h3>
+
+    {{ forms.textField({
+        label: 'Zip Code Whitelist',
+        instructions: 'Comma separated list of zip codes for lead contact validation.',
+        id: 'zipCodes',
+        name: 'settings[zipCodes]',
+        value: settings['zipCodes']})
+    }}
+
+    {{ forms.selectField({
+        label: 'Non-Whitelist Initial Status',
+        instructions: 'Select status that will be set if lead zipcode is not in whitelist.',
+        id: 'statusByZip',
+        options: craft.estimatorWizard.getStatusesAsOptions(),
+        name: 'settings[statusByZip]',
+        value: settings['statusByZip']})
+    }}
+{% endset %}

@@ -10,12 +10,19 @@
 
 namespace leaplogic\estimatorwizard\elements;
 
-use leaplogic\estimatorwizard\EstimatorWizard;
-
 use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQuery;
 use craft\elements\db\ElementQueryInterface;
+
+use craft\helpers\UrlHelper;
+use craft\elements\actions\Delete;
+use leaplogic\estimatorwizard\elements\db\LeadEstimateQuery;
+use leaplogic\estimatorwizard\records\LeadEstimate as LeadEstimateRecord;
+use leaplogic\estimatorwizard\EstimatorWizard;
+use yii\base\Exception;
+use yii\base\InvalidConfigException;
+use yii\db\ActiveRecord;
 
 /**
  *  Element
@@ -66,19 +73,20 @@ class LeadEstimate extends Element
     // Public Properties
     // =========================================================================
 
-    /**
-     * Path
-     *
-     * @var string
-     */
-    public $path = '';
-    public $results = '';
-    public $contactName = '';
-    public $contactEmail = '';
-    public $contactPhone = '';
-    public $contactCustomer ='';
-
+    public $id;
+    public $pathLabel;
+    public $pathBasePrice;
+    public $results;
+    public $contactName;
+    public $contactEmail;
+    public $contactPhone;
+    public $contactZipCode;
+    public $contactCustomer;
     public $statusId;
+    public $statusHandle;
+    public $statusColor;
+    public $trafficSource;
+    public $notes;
 
     // Static Methods
     // =========================================================================
@@ -90,7 +98,23 @@ class LeadEstimate extends Element
      */
     public static function displayName(): string
     {
+        return Craft::t('estimator-wizard', 'Lead Estimate');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function pluralDisplayName(): string
+    {
         return Craft::t('estimator-wizard', 'Lead Estimates');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function refHandle()
+    {
+        return 'leadestimate';
     }
 
     /**
@@ -101,7 +125,7 @@ class LeadEstimate extends Element
      */
     public static function hasContent(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -111,40 +135,70 @@ class LeadEstimate extends Element
      */
     public static function hasTitles(): bool
     {
-        return true;
+        return false;
     }
 
     /**
-     * Returns whether elements of this type have statuses.
-     *
-     * If this returns `true`, the element index template will show a Status menu
-     * by default, and your elements will get status indicator icons next to them.
-     *
-     * Use [[statuses()]] to customize which statuses the elements might have.
-     *
-     * @return bool Whether elements of this type have statuses.
-     * @see statuses()
+     * @inheritdoc
      */
-    public static function isLocalized(): bool
+    public static function trackChanges(): bool
     {
-        return true;
+        return false;
     }
-
+    
+     /**
+     * @inheritdoc
+     */
     public static function hasStatuses(): bool
     {
         return true;
     }
 
+    /**
+     * @inheritdoc
+     */
+    protected static function defineSources(string $context = null): array
+    {
 
+        $sources = [
+            [
+                'key' => '*',
+                'label' => Craft::t('app', 'All Leads'),
+                'criteria' => [],
+                'defaultSort' => ['createdDate', 'desc']
+            ]
+        ];
+        return $sources;
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    public function getCpEditUrl()
+    {
+        return UrlHelper::cpUrl(
+            'estimator-wizard/lead-estimates/edit/'.$this->id
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
     public static function statuses(): array
     {
-        return [
-            'qualified' => ['label' => \Craft::t('estimator-wizard', 'Qualified'), 'color' => 'A8E26E'],
-            'qalified-out-of-area' => ['label' => \Craft::t('estimator-wizard', 'Qualified (Out of Area)'), 'color' => 'cb7624'],
-            'unqualified-phone' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Phone)'), 'color' => 'a5272a'],
-            'unqualified-email' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Email)'), 'color' => 'a5272a'],
-            'unqualified-spam' => ['label' => \Craft::t('estimator-wizard', 'Unqualified (Spam)'), 'color' => 'a5272a'],
-        ];
+        $statuses = EstimatorWizard::$app->leads->getAllLeadStatuses();
+        $statusArray = [];
+
+        foreach ($statuses as $status) {
+            $key = $status['handle'];
+            $statusArray[$key] = [
+                'label' => $status['name'],
+                'color' => $status['color'],
+            ];
+        }
+
+        return $statusArray;
     }
 
     /**
@@ -155,79 +209,26 @@ class LeadEstimate extends Element
     {
         $statusId = $this->statusId;
 
-        return EstimatorWizard::$app->entries->getEntryStatusById($statusId)->handle;
+        return EstimatorWizard::$app->leads->getLeadStatusById($statusId)->handle;
     }
 
 
     /**
-     * Creates an [[ElementQueryInterface]] instance for query purpose.
-     *
-     * The returned [[ElementQueryInterface]] instance can be further customized by calling
-     * methods defined in [[ElementQueryInterface]] before `one()` or `all()` is called to return
-     * populated [[ElementInterface]] instances. For example,
-     *
-     * ```php
-     * // Find the entry whose ID is 5
-     * $entry = Entry::find()->id(5)->one();
-     *
-     * // Find all assets and order them by their filename:
-     * $assets = Asset::find()
-     *     ->orderBy('filename')
-     *     ->all();
-     * ```
-     *
-     * If you want to define custom criteria parameters for your elements, you can do so by overriding
-     * this method and returning a custom query class. For example,
-     *
-     * ```php
-     * class Product extends Element
-     * {
-     *     public static function find()
-     *     {
-     *         // use ProductQuery instead of the default ElementQuery
-     *         return new ProductQuery(get_called_class());
-     *     }
-     * }
-     * ```
-     *
-     * You can also set default criteria parameters on the ElementQuery if you don’t have a need for
-     * a custom query class. For example,
-     *
-     * ```php
-     * class Customer extends ActiveRecord
-     * {
-     *     public static function find()
-     *     {
-     *         return parent::find()->limit(50);
-     *     }
-     * }
-     * ```
-     *
      * @return ElementQueryInterface The newly created [[ElementQueryInterface]] instance.
      */
     public static function find(): ElementQueryInterface
     {
-        return new ElementQuery(get_called_class());
+        return new LeadEstimateQuery(static::class);
     }
 
-    /**
-     * Defines the sources that elements of this type may belong to.
-     *
-     * @param string|null $context The context ('index' or 'modal').
-     *
-     * @return array The sources.
-     * @see sources()
-     */
-    protected static function defineSources(string $context = null): array
-    {
-        $sources = [];
-
-        return $sources;
-    }
 
     // Public Methods
     // =========================================================================
-
+    public function init()
+    {
+        parent::init();
+        $this->setScenario(self::SCENARIO_LIVE);
+    }
     /**
      * Returns the validation rules for attributes.
      *
@@ -240,10 +241,11 @@ class LeadEstimate extends Element
      */
     public function rules()
     {
-        return [
-            ['someAttribute', 'string'],
-            ['someAttribute', 'default', 'value' => 'Some Default'],
-        ];
+        $rules = parent::defineRules();
+
+        $rules[] = [['contactEmail','pathLabel','statusId'], 'required'];
+
+        return $rules;
     }
 
     /**
@@ -257,32 +259,75 @@ class LeadEstimate extends Element
     }
 
     /**
-     * Returns the field layout used by this element.
-     *
-     * @return FieldLayout|null
+     * Returns the pathBasePrice as an array [low],[high]
+     * 
+     * @return array
      */
-    public function getFieldLayout()
-    {
-        $tagGroup = $this->getGroup();
-
-        if ($tagGroup) {
-            return $tagGroup->getFieldLayout();
-        }
-
-        return null;
+    public function pathPrice(): array 
+    {   
+        $price = $this->pathBasePrice;
+        return json_decode($price, true); 
     }
 
-    public function getGroup()
+    /**
+     * Returns the steps as an array converted from a JSON text string.
+     * 
+     * @return array
+     */
+    public function steps(): array
     {
-        if ($this->groupId === null) {
-            throw new InvalidConfigException('Tag is missing its group ID');
+        return json_decode($this->results, true);
+    }
+
+    /**
+     * Returns the Low Estimate Total of all steps and base path price.
+     * 
+     * @return string
+     */
+    public function estimateLow(): string
+    {
+        $pathPrice = json_decode($this->pathBasePrice, true);
+        $prices = [];
+        $steps = json_decode($this->results, true);
+        foreach ($steps as $key => $value) {
+            array_push($prices, $value['price']['low']);
+        }
+        
+        return intval($pathPrice['low']) + intval(array_sum($prices));
+    }
+
+    /**
+     * Returns the High Estimate Total of all steps and base path price.
+     * 
+     * @return string
+     */
+    public function estimateHigh(): string
+    {
+        $pathPrice = json_decode($this->pathBasePrice, true);
+        $prices = [];
+        $steps = json_decode($this->results, true);
+        foreach ($steps as $key => $value) {
+            array_push($prices, $value['price']['high']);
+        }
+        
+        return intval($pathPrice['high']) + intval(array_sum($prices));
+    }
+
+    /**
+     * Returns boolean if current element status is equal to settings Non-WhiteListStatus selection.
+     * 
+     * @return bool
+     */
+    public function isVisible(): bool
+    {
+        $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
+        $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
+
+        if($nonWhiteListStatus->handle === $this->status) {
+            return false;
         }
 
-        if (($group = Craft::$app->getTags()->getTagGroupById($this->groupId)) === null) {
-            throw new InvalidConfigException('Invalid tag group ID: '.$this->groupId);
-        }
-
-        return $group;
+        return true;
     }
 
     // Indexes, etc.
@@ -298,7 +343,6 @@ class LeadEstimate extends Element
         $html = Craft::$app->getView()->renderTemplateMacro('_includes/forms', 'textField', [
             [
                 'label' => Craft::t('app', 'Title'),
-                'siteId' => $this->siteId,
                 'id' => 'title',
                 'name' => 'title',
                 'value' => $this->title,
@@ -314,6 +358,47 @@ class LeadEstimate extends Element
         return $html;
     }
 
+    /**
+     * @inheritdoc
+     */
+    protected static function defineTableAttributes(): array
+    {
+        $attributes['id'] = ['label' => Craft::t('estimator-wizard', 'ID')];
+        $attributes['contactName'] = ['label' => Craft::t('estimator-wizard', 'Contact')];
+        $attributes['pathLabel'] = ['label' => Craft::t('estimator-wizard', 'Path')];
+        //$attributes['contactEmail'] = ['label' => Craft::t('estimator-wizard', 'Contact Email')];
+        $attributes['dateCreated'] = ['label' => Craft::t('estimator-wizard', 'Date Created')];
+        //$attributes['dateUpdated'] = ['label' => Craft::t('estimator-wizard', 'Date Updated')];
+
+        return $attributes;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected static function defineSearchableAttributes(): array
+    {
+        return ['pathLabel', 'contactName'];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected static function defineDefaultTableAttributes(string $source): array
+    {
+        return ['contactName', 'pathLabel', 'statusId', 'dateCreated', 'dateUpdated'];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getContentTable(): string
+    {
+        return "{{%estimatorwizard_leadestimates}}";
+    }
+
+
+
     // Events
     // -------------------------------------------------------------------------
 
@@ -326,6 +411,11 @@ class LeadEstimate extends Element
      */
     public function beforeSave(bool $isNew): bool
     {
+        // Save previous status to status log
+        // if (!$isNew) {
+        //     $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+        //     EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
+        // }
         return true;
     }
 
@@ -338,6 +428,64 @@ class LeadEstimate extends Element
      */
     public function afterSave(bool $isNew)
     {
+        // Get the lead estimate record
+        if (!$isNew) {
+            $record = LeadEstimateRecord::findOne($this->id);
+
+            // Save previous status to status log
+            if($record->statusId != $this->statusId) {
+                $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+                EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
+            }
+
+            if (!$record) {
+                throw new Exception('Invalid Lead ID: '.$this->id);
+            }
+        } else {
+            $record = new LeadEstimateRecord();
+            $record->id = $this->id;
+        }
+
+        $record->statusId = $this->statusId;
+        $record->pathLabel = $this->pathLabel;
+        $record->pathBasePrice = $this->pathBasePrice;
+        $record->results = $this->results;
+        $record->contactName = $this->contactName;
+        $record->contactEmail = $this->contactEmail;
+        $record->contactPhone = $this->contactPhone;
+        $record->contactZipCode = $this->contactZipCode;
+        $record->contactCustomer = $this->contactCustomer;
+        $record->trafficSource = $this->trafficSource;
+        $record->notes = $this->notes;
+
+        $record->save(false);
+
+        // Save initial status to status log
+        if ($isNew) {
+            $currentUser = Craft::$app->getUser()->getIdentity()->getId();
+            $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
+            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $currentUser);
+        }
+
+        parent::afterSave($isNew);
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    protected static function defineActions(string $source = null): array
+    {
+        $actions = [];
+
+        // Delete
+        $actions[] = Craft::$app->getElements()->createAction([
+            'type' => Delete::class,
+            'confirmationMessage' => Craft::t('estimator-wizard', 'Are you sure you want to delete the selected leads?'),
+            'successMessage' => Craft::t('estimator-wizard', 'Leads deleted.'),
+        ]);
+
+        return $actions;
     }
 
     /**
@@ -350,35 +498,4 @@ class LeadEstimate extends Element
         return true;
     }
 
-    /**
-     * Performs actions after an element is deleted.
-     *
-     * @return void
-     */
-    public function afterDelete()
-    {
-    }
-
-    /**
-     * Performs actions before an element is moved within a structure.
-     *
-     * @param int $structureId The structure ID
-     *
-     * @return bool Whether the element should be moved within the structure
-     */
-    public function beforeMoveInStructure(int $structureId): bool
-    {
-        return true;
-    }
-
-    /**
-     * Performs actions after an element is moved within a structure.
-     *
-     * @param int $structureId The structure ID
-     *
-     * @return void
-     */
-    public function afterMoveInStructure(int $structureId)
-    {
-    }
 }
