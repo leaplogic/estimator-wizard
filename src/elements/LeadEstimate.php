@@ -143,7 +143,7 @@ class LeadEstimate extends Element
      */
     public static function trackChanges(): bool
     {
-        return true;
+        return false;
     }
     
      /**
