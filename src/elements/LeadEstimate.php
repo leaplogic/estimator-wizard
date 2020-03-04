@@ -462,9 +462,11 @@ class LeadEstimate extends Element
 
         // Save initial status to status log
         if ($isNew) {
-            $currentUser = Craft::$app->getUser()->getIdentity()->getId();
-            $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
-            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $currentUser);
+            $currentUser = Craft::$app->getUser()->getIdentity();
+            if($currentUser != null) {
+                $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
+                EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $currentUser->getId());
+            }
         }
 
         parent::afterSave($isNew);
