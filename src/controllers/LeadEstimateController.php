@@ -154,7 +154,7 @@ class LeadEstimateController extends Controller
                 : EstimatorWizard::$app->leads->getDefaultLeadStatusId());
 
 
-        $success = $lead->validate();
+        $success = $lead->validate(null, false);
 
         if (!$success) {
             Craft::error($lead->getErrors(), __METHOD__);
@@ -182,6 +182,13 @@ class LeadEstimateController extends Controller
         $success = EstimatorWizard::$app->leads->saveLead($lead);
 
         if (!$success) {
+            if (Craft::$app->getRequest()->getAcceptsJson()) {
+                return $this->asJson([
+                    'success' => false,
+                    'errors' => $lead->getErrors(),
+                ]);
+            }
+    
             return $this->redirectWithErrors($lead);
         }
 
