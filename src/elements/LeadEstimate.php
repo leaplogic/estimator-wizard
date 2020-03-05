@@ -210,7 +210,7 @@ class LeadEstimate extends Element
     {
         $statusId = $this->statusId;
 
-        return EstimatorWizard::$app->leads->getLeadStatusById($statusId)->handle;
+        return EstimatorWizard::$app->leads->getLeadStatusById($statusId);
     }
 
 
