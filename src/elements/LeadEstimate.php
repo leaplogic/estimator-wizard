@@ -436,7 +436,7 @@ class LeadEstimate extends Element
             // Save previous status to status log
             if($record->statusId != $this->statusId) {
                 $currentUser = Craft::$app->getUser()->getIdentity()->getId();
-                EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusHandle, $currentUser);
+                EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusId, $currentUser);
             }
 
             if (!$record) {
@@ -467,8 +467,7 @@ class LeadEstimate extends Element
             $adminUser = User::find()->admin(true)->one();
             
             $userId = $currentUser != null ? $currentUser->getId() : $adminUser->getId();
-            $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
-            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $userId);
+            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $this->statusId, $userId);
             
         }
 

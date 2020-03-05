@@ -154,7 +154,7 @@
             {% for item in logs %}
                 <tr>
                     {% set user = craft.users().id(item.authorId).one() %}
-                    {% set status = craft.estimatorWizard.getStatusByHandle(item.status) %}
+                    {% set status = craft.estimatorWizard.getStatusById(item.status) %}
                     <td style="text-align:left;"><span class="status {{ status.color }}"></span> {{ status.name }}
                         {% if loop.first %} <i>(Initial Status)</i> {% endif %}
                     </td>

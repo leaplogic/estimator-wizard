@@ -145,8 +145,8 @@ class Install extends Migration
 
             $this->createTable('{{%estimatorwizard_leadstatuslog}}', [
                 'id' => $this->primaryKey(),
-                'leadId' => $this->integer(),
-                'status' => $this->string()->notNull(),
+                'leadId' => $this->integer()->notNull(),
+                'status' => $this->integer()->notNull(),
                 'authorId' => $this->integer()->notNull(),
                 'dateCreated' => $this->dateTime()->notNull(),
                 'dateUpdated' => $this->dateTime()->notNull(),

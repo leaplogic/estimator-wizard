@@ -6,6 +6,7 @@ use leaplogic\estimatorwizard\elements\db\LeadEstimateQuery;
 use leaplogic\estimatorwizard\elements\LeadEstimate;
 use leaplogic\estimatorwizard\services\Leads;
 use leaplogic\estimatorwizard\EstimatorWizard;
+use leaplogic\estimatorwizard\records\LeadStatus as LeadStatusRecord;
 use Craft;
 use craft\base\ElementInterface;
 use craft\errors\MissingComponentException;
@@ -106,12 +107,15 @@ class EstimatorWizardVariables
         return $options;
     }
 
-
     public function getStatusByHandle($handle): object
     {
         return EstimatorWizard::$app->leads->getStatusByHandle($handle);
     }
 
+    public function getStatusById($id): object
+    {
+        return LeadStatusRecord::find()->id($id)->one();
+    }
 
     /**
      * Returns a new LeadEstimateQuery instance.
