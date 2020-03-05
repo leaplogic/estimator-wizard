@@ -114,7 +114,7 @@ class EstimatorWizardVariables
 
     public function getStatusById($id): object
     {
-        return LeadStatusRecord::find()->id($id)->one();
+        return EstimatorWizard::$app->leads->getLeadStatusById($id);
     }
 
     /**
