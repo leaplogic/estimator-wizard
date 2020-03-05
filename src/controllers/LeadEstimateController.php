@@ -253,7 +253,7 @@ class LeadEstimateController extends Controller
             $statusLog = (new \craft\db\Query())
                 ->select(['status'])
                 ->from(['{{%estimatorwizard_leadstatuslog}}'])
-                ->where(['dateDeleted' => null])
+                ->where(['leadId' => $leadId])
                 ->all();
                 
             // If editLeadPartialStatus user has already changed status from 
