@@ -15,6 +15,7 @@ use craft\base\Element;
 use craft\elements\db\ElementQuery;
 use craft\elements\db\ElementQueryInterface;
 
+use craft\elements\User;
 use craft\helpers\UrlHelper;
 use craft\elements\actions\Delete;
 use leaplogic\estimatorwizard\elements\db\LeadEstimateQuery;
@@ -463,10 +464,12 @@ class LeadEstimate extends Element
         // Save initial status to status log
         if ($isNew) {
             $currentUser = Craft::$app->getUser()->getIdentity();
-            if($currentUser != null) {
-                $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
-                EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $currentUser->getId());
-            }
+            $adminUser = User::find()->admin(true)->one();
+            
+            $userId = $currentUser != null ? $currentUser->getId() : $adminUser->getId();
+            $status = EstimatorWizard::$app->leads->getLeadStatusById($this->statusId);
+            EstimatorWizard::$plugin->getInstance()->log->saveLogEntry($this->id, $status->handle, $userId);
+            
         }
 
         parent::afterSave($isNew);
