@@ -211,8 +211,8 @@ class Install extends Migration
                 'isDefault' => 1
             ],
             1 => [
-                'name' => 'Qualified (Out of Area)',
-                'handle' => 'qualified-out-of-area',
+                'name' => 'Unqualified (Out of Area)',
+                'handle' => 'unqualified-out-of-area',
                 'color' => 'orange',
                 'sortOrder' => 2,
                 'isDefault' => 0
