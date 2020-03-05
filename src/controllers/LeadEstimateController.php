@@ -250,25 +250,12 @@ class LeadEstimateController extends Controller
             $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
             $defaultStatus = EstimatorWizard::$app->leads->getLeadStatusById($defaultStatusId);
             $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
-            $statusLog = (new \craft\db\Query())
-                ->select(['status'])
-                ->from(['{{%estimatorwizard_leadstatuslog}}'])
-                ->where(['leadId' => $leadId])
-                ->all();
-                
-            // If editLeadPartialStatus user has already changed status from 
-            // $nonWhiteListStatus to $defaultStatus then we prevent from editing status again and only give default status.
-            if( in_array($nonWhiteListStatus->id, $statusLog) && in_array($defaultStatusId, $statusLog) ) {
-                $index1 = array_search($nonWhiteListStatus->id, $statusLog);
-                $index2 = array_search($defaultStatusId, $statusLog);
-                if($index2 > $index1) {
-                    $leadStatuses[$defaultStatusId] = $defaultStatus->name;
-                }
+            // If lead is already the defaultStatus just show defaultStatus
+            if($lead->statusId != $defaultStatusId) {
+                $leadStatuses[$defaultStatusId] = $defaultStatus->name;
+                $leadStatuses[$nonWhiteListStatus->id] = $nonWhiteListStatus->name;
             } else {
-                if($statusLog[0] != $defaultStatusId) {
-                    $leadStatuses[$defaultStatusId] = $defaultStatus->name;
-                    $leadStatuses[$nonWhiteListStatus->id] = $nonWhiteListStatus->name;
-                }
+                $leadStatuses[$lead->statusId] = $leadStatus->name;
             }
         }
 
