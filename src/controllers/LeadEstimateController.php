@@ -250,8 +250,8 @@ class LeadEstimateController extends Controller
             $settings = Craft::$app->plugins->getPlugin('estimator-wizard')->getSettings();
             $defaultStatus = EstimatorWizard::$app->leads->getLeadStatusById($defaultStatusId);
             $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
-            // If lead is already the defaultStatus just show defaultStatus
-            if($lead->statusId != $defaultStatusId) {
+            // If lead is already the defaultStatus or equal to nonWhiteListStatus just show defaultStatus
+            if($lead->statusId != $defaultStatusId && $lead->statuId == $nonWhiteListStatus->id) {
                 $leadStatuses[$defaultStatusId] = $defaultStatus->name;
                 $leadStatuses[$nonWhiteListStatus->id] = $nonWhiteListStatus->name;
             } else {
