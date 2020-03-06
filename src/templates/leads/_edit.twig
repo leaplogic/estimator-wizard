@@ -155,8 +155,8 @@
                 <tr>
                     {% set user = craft.users().id(item.authorId).one() %}
                     {% set status = craft.estimatorWizard.getStatusById(item.status) %}
-                    <td style="text-align:left;"><span class="status {{ status.color }}"></span> {{ status.name }}
-                        {% if loop.first %} <i>(Initial Status)</i> {% endif %}
+                    <td style="text-align:left;"><span class="status {{ status.color }}"></span> 
+                        {% if loop.first %} System <i>(Initial Status)</i> {% else %} {{ status.name }} {% endif %}
                     </td>
                     <td style="text-align:left;">{{ user.firstName }} {{ user.lastName }}</td>
                     <td style="text-align:left;">{{ item.dateCreated|datetime('short') }}</td>
