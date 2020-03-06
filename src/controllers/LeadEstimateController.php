@@ -251,7 +251,7 @@ class LeadEstimateController extends Controller
             $defaultStatus = EstimatorWizard::$app->leads->getLeadStatusById($defaultStatusId);
             $nonWhiteListStatus = EstimatorWizard::$app->leads->getLeadStatusRecordById($settings->statusByZip);
             // If lead is already the defaultStatus or equal to nonWhiteListStatus just show defaultStatus
-            if($lead->statusId != $defaultStatusId && $lead->statuId == $nonWhiteListStatus->id) {
+            if($lead->statusId != $defaultStatusId && $lead->statusId == $nonWhiteListStatus->id) {
                 $leadStatuses[$defaultStatusId] = $defaultStatus->name;
                 $leadStatuses[$nonWhiteListStatus->id] = $nonWhiteListStatus->name;
             } else {
