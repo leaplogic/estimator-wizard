@@ -11,14 +11,14 @@
         "estimator wizard"
     ],
     "support": {
-        "docs": "https://github.com/leaplogic/estimator-wizard/estimator-wizard/blob/master/README.md",
-        "issues": "https://github.com/leaplogic/estimator-wizard/estimator-wizard/issues"
+        "docs": "https://github.com/leaplogic/estimator-wizard/blob/master/README.md",
+        "issues": "https://github.com/leaplogic/estimator-wizard/issues"
     },
     "license": "MIT",
     "authors": [
         {
             "name": "Leap Logic",
-            "homepage": "https://leaplogic.net"
+            "homepage": "https://leaplogic.com"
         }
     ],
     "require": {
@@ -34,7 +34,7 @@
         "handle": "estimator-wizard",
         "hasCpSettings": true,
         "hasCpSection": true,
-        "changelogUrl": "https://raw.githubusercontent.com/leaplogic/estimator-wizard/estimator-wizard/master/CHANGELOG.md",
+        "changelogUrl": "https://raw.githubusercontent.com/leaplogic/estimator-wizard/master/CHANGELOG.md",
         "components": {
             "leads": "leaplogic\\estimatorwizard\\services\\Leads",
             "settings": "leaplogic\\estimatorwizard\\services\\Settings",
